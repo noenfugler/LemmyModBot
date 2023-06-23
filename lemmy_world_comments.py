@@ -29,7 +29,7 @@ def process_comment(comment):
         print('REPORT FOR COMMENT:')
         print(flags)
         print('***\n')
-        comment.create_comment_report(reason=', '.join(flags))
+        comment.create_report(reason=', '.join(flags))
 
 lemmy = Lemmy(
     lemmy_url=credentials.instance,
@@ -38,8 +38,7 @@ lemmy = Lemmy(
     user_agent="custom user agent (by "+credentials.alt_username+")",
 )
 
-# community = lemmy.get_community("asklemmy@lemmy.world")
-community = lemmy.get_community("asklemmy@lemmy.world")
+community = lemmy.get_community(credentials.community)
 for comment in community.stream.get_comments():
     process_comment(comment)
 

@@ -2,4 +2,5 @@
 username = "username here"
 password = "password here"
 instance = "https://lemmy.ml"
+community = "my_community"
 alt_username = 'username for real user who manages the bot.'

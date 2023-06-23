@@ -1,2 +1,2 @@
 # LemmyModBot
-A Lemmy bot written in Python using [plemmy](https://github.com/tjkessler/plemmy/blob/main/README.md) .
+A Lemmy bot written in Python using [pylemmy](https://github.com/dcferreira/pylemmy)https://github.com/dcferreira/pylemmy).

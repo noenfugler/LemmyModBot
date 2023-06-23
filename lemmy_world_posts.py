@@ -1,5 +1,4 @@
-# from pylemmy import Lemmy
-from pylemmy_foo import Lemmy
+from pylemmy import Lemmy
 from detoxify import Detoxify
 import credentials
 

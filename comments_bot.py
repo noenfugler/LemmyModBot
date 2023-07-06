@@ -1,12 +1,15 @@
 from pylemmy import Lemmy
 from detoxify import Detoxify
 import credentials
+from datetime import datetime
+from time import sleep
 
 def process_comment(comment):
     flags = []
     content = comment.comment_view.comment.content
-    # body = post.post_view.post.body
-    print('\n',content)
+    name = comment.post.post_view.post.name
+    print(datetime.now().isoformat())
+    # print(content)
     if content is not None:
         results = Detoxify('unbiased').predict(content)
         print(results)
@@ -29,7 +32,15 @@ def process_comment(comment):
         print('REPORT FOR COMMENT:')
         print(flags)
         print('***\n')
-        comment.create_report(reason=', '.join(flags))
+        myfile = open("reports.txt", "a")
+        try:
+            post.create_report(reason='Detoxify bot. '+', '.join(flags))
+            myfile.write(post.post_view.post.id + ", " + name + ", "+content[:50]+", " + '|'.join(flags)+", REPORTED COMMENT")
+        except:
+            print("ERROR: UNABLE TO CREATE REPORT")
+            myfile.write(post.post_view.post.id + ", " + name + ", " + content[:50] + ", " + '|'.join(flags) + ", FAILED TO REPORT COMMENT")
+        myfile.close
+    # print('****************************************************************')
 
 lemmy = Lemmy(
     lemmy_url=credentials.instance,
@@ -38,7 +49,11 @@ lemmy = Lemmy(
     user_agent="custom user agent (by "+credentials.alt_username+")",
 )
 
-community = lemmy.get_community(credentials.community)
-for comment in community.stream.get_comments():
-    process_comment(comment)
-
+while True:
+    try:
+        community = lemmy.get_community(credentials.community)
+        for comment in community.stream.get_comments():
+            process_comment(comment)
+    except:
+        print('Error in connection or stream.  Waiting 60s and trying again')
+        sleep(60)

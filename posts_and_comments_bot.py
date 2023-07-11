@@ -75,20 +75,21 @@ def process_content(elem: Union[Post, Comment]):
             if content is not None:
                 results = Detoxify('unbiased').predict(content)
                 print(results)
-                if results['toxicity'] > 0.8:
+                if results['toxicity'] > credentials.toxicity:
                     flags.append('toxicity')
-                if results['severe_toxicity'] > 0.5:
+                if results['severe_toxicity'] > credentials.severe_toxicity:
                     flags.append('severe_toxicity')
-                if results['obscene'] > 0.5:
+                if results['obscene'] > credentials.obscene:
                     flags.append('obscene')
-                if results['identity_attack'] > 0.5:
+                if results['identity_attack'] > credentials.identity_attack:
                     flags.append('identity_attack')
-                if results['insult'] > 0.8:
+                if results['insult'] > credentials.insult:
                     flags.append('insult')
-                if results['threat'] > 0.5:
+                if results['threat'] > credentials.threat:
                     flags.append('threat')
-                if results['sexual_explicit'] > 0.8:
+                if results['sexual_explicit'] > credentials.sexually_explicit:
                     flags.append('sexual_explicit')
+            db.add_to_comments_list(id)
             if len(flags) > 0:
                 #we found something bad
                 print('***')
@@ -104,7 +105,6 @@ def process_content(elem: Union[Post, Comment]):
                     print("ERROR: UNABLE TO CREATE REPORT")
                     myfile.write(str(elem.post_view.post.id) + ", " + name + ", " + content[:50] + ", " + '|'.join(flags) + ", FAILED TO REPORT COMMENT\n")
                 myfile.close
-            db.add_to_comments_list(id)
         else:
             print('Already Assessed')
     elif isinstance(elem, Post):
@@ -119,37 +119,38 @@ def process_content(elem: Union[Post, Comment]):
             if name is not None:
                 results = Detoxify('unbiased').predict(name)
                 print(results)
-                if results['toxicity'] > 0.8:
+                if results['toxicity'] > credentials.toxicity:
                     flags.append('toxicity')
-                if results['severe_toxicity'] > 0.5:
+                if results['severe_toxicity'] > credentials.severe_toxicity:
                     flags.append('severe_toxicity')
-                if results['obscene'] > 0.5:
+                if results['obscene'] > credentials.obscene:
                     flags.append('obscene')
-                if results['identity_attack'] > 0.5:
+                if results['identity_attack'] > credentials.identity_attack:
                     flags.append('identity_attack')
-                if results['insult'] > 0.8:
+                if results['insult'] > credentials.insult:
                     flags.append('insult')
-                if results['threat'] > 0.5:
+                if results['threat'] > credentials.threat:
                     flags.append('threat')
-                if results['sexual_explicit'] > 0.8:
+                if results['sexual_explicit'] > credentials.sexually_explicit:
                     flags.append('sexual_explicit')
             if body is not None:
                 results = Detoxify('unbiased').predict(body)
                 print(results)
-                if results['toxicity'] > 0.8:
+                if results['toxicity'] > credentials.toxicity:
                     flags.append('toxicity')
-                if results['severe_toxicity'] > 0.5:
+                if results['severe_toxicity'] > credentials.severe_toxicity:
                     flags.append('severe_toxicity')
-                if results['obscene'] > 0.5:
+                if results['obscene'] > credentials.obscene:
                     flags.append('obscene')
-                if results['identity_attack'] > 0.5:
+                if results['identity_attack'] > credentials.identity_attack:
                     flags.append('identity_attack')
-                if results['insult'] > 0.8:
+                if results['insult'] > credentials.insult:
                     flags.append('insult')
-                if results['threat'] > 0.5:
+                if results['threat'] > credentials.threat:
                     flags.append('threat')
-                if results['sexual_explicit'] > 0.8:
+                if results['sexual_explicit'] > credentials.sexually_explicit:
                     flags.append('sexual_explicit')
+            db.add_to_posts_list(id)
             if len(flags) > 0:
                 print('***')
                 print('REPORT FOR COMMENT:')
@@ -166,7 +167,6 @@ def process_content(elem: Union[Post, Comment]):
                     print("ERROR: UNABLE TO CREATE REPORT")
                     myfile.write(str(elem.post_view.post.id) + ", " + name + ", , " + '|'.join(flags) + ", FAILED TO REPORT POST\n")
                 myfile.close
-            db.add_to_posts_list(id)
         else:
             print('Already Assessed')
 

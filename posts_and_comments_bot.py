@@ -9,6 +9,7 @@ import sqlite3
 from pathlib import Path
 import os
 from time import sleep
+import traceback
 
 class Database():
     def __init__(self, directoryname, filename):
@@ -101,8 +102,9 @@ class Database():
     def add_outcome_to_comment(self, id, outcome):
         # add an outcome to a comment
         conn = sqlite3.connect(self.directoryname + "/" + self.filename)
-        # cur = conn.cursor()
-        # sql = f'INSERT INTO comments(id) VALUES({id})'
+        # tidy up the outcome string to remove quotes which might break the SQL statement
+        outcome = outcome.replace('"', '')
+        outcome = outcome.replace("'", "")
         sql = f'''UPDATE comments SET outcome='{outcome}' WHERE id={id};'''
         conn.execute(sql)
         conn.commit()
@@ -180,7 +182,7 @@ def process_content(elem: Union[Post, Comment]):
                 except Exception as e:
                     print(e)
                     print("ERROR: UNABLE TO CREATE REPORT")
-                    db.add_outcome_to_comment(id, "Failed to report comment for: " + '|'.join(flags))
+                    db.add_outcome_to_comment(id, "Failed to report comment for: " + '|'.join(flags)+" due to exception :" + traceback.format_exc())
             else:
                 db.add_outcome_to_comment(id, "No report")
         else:
@@ -259,7 +261,7 @@ def process_content(elem: Union[Post, Comment]):
                 except Exception as e:
                     print(e)
                     print("ERROR: UNABLE TO CREATE REPORT")
-                    db.add_outcome_to_post(id, "Failed to report post for: " + '|'.join(flags))
+                    db.add_outcome_to_comment(id, "Failed to report post for: " + '|'.join(flags) + " due to exception :" + traceback.format_exc())
                 pass
             else:
                 db.add_outcome_to_post(id, "No report")

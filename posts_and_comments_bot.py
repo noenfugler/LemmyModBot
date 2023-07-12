@@ -4,7 +4,6 @@ from pylemmy.models.comment import Comment
 from detoxify import Detoxify
 import credentials
 from datetime import datetime
-from time import sleep
 from typing import Union
 import sqlite3
 from pathlib import Path
@@ -155,19 +154,21 @@ def process_content(elem: Union[Post, Comment]):
             if content is not None:
                 results = Detoxify('unbiased').predict(content)
                 print(results)
-                if results['toxicity'] > credentials.toxicity:
+                total = results['toxicity'] + results['severe_toxicity'] + results['obscene'] + results['identity_attack'] + results['insult'] + results['threat'] + results['sexual_explicit']
+                print(total)
+                if results['toxicity'] > credentials.toxicity and total > credentials.total:
                     flags.append('toxicity')
-                if results['severe_toxicity'] > credentials.severe_toxicity:
+                if results['severe_toxicity'] > credentials.severe_toxicity and total > credentials.total:
                     flags.append('severe_toxicity')
-                if results['obscene'] > credentials.obscene:
+                if results['obscene'] > credentials.obscene and total > credentials.total:
                     flags.append('obscene')
-                if results['identity_attack'] > credentials.identity_attack:
+                if results['identity_attack'] > credentials.identity_attack and total > credentials.total:
                     flags.append('identity_attack')
-                if results['insult'] > credentials.insult:
+                if results['insult'] > credentials.insult and total > credentials.total:
                     flags.append('insult')
-                if results['threat'] > credentials.threat:
+                if results['threat'] > credentials.threat and total > credentials.total:
                     flags.append('threat')
-                if results['sexual_explicit'] > credentials.sexually_explicit:
+                if results['sexual_explicit'] > credentials.sexually_explicit and total > credentials.total:
                     flags.append('sexual_explicit')
             db.add_to_comments_list(id, results)
             if len(flags) > 0:
@@ -179,7 +180,7 @@ def process_content(elem: Union[Post, Comment]):
 
                 # if True:
                 try:
-                    elem.create_report(reason='Detoxify bot. '+', '.join(flags))
+                    elem.create_report(reason='Detoxify bot: '+', '.join(flags))
                     print('****************\nREPORTED COMMENT\n******************')
                     db.add_outcome_to_comment(id, "Reported comment for: " + '|'.join(flags))
                 # else:

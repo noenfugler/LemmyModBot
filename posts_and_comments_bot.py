@@ -8,6 +8,8 @@ from typing import Union
 import sqlite3
 from pathlib import Path
 import os
+from time import sleep
+import traceback
 
 class Database():
     def __init__(self, directoryname, filename):
@@ -100,8 +102,9 @@ class Database():
     def add_outcome_to_comment(self, id, outcome):
         # add an outcome to a comment
         conn = sqlite3.connect(self.directoryname + "/" + self.filename)
-        # cur = conn.cursor()
-        # sql = f'INSERT INTO comments(id) VALUES({id})'
+        # tidy up the outcome string to remove quotes which might break the SQL statement
+        outcome = outcome.replace('"', '')
+        outcome = outcome.replace("'", "")
         sql = f'''UPDATE comments SET outcome='{outcome}' WHERE id={id};'''
         conn.execute(sql)
         conn.commit()
@@ -128,10 +131,6 @@ class Database():
         name_results['insult'], name_results['threat'], name_results['sexual_explicit'], body_results['toxicity'], 
         body_results['severe_toxicity'], body_results['obscene'], body_results['identity_attack'], 
         body_results['insult'], body_results['threat'], body_results['sexual_explicit']};"""
-        # print(sql)
-        # sql = f"""INSERT INTO posts(id, name_toxicity, name_severe_toxicity, name_obscene, name_identity_attack,
-        # name_insult, name_threat, name_sexual explicit, body_toxicity, body_severe_toxicity, body_obscene,
-        # body_identity_attack, body_insult, body_threat, body_sexual_explicit) VALUES({id}, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1);"""
 
         conn.execute(sql)
         conn.commit()
@@ -150,7 +149,6 @@ def process_content(elem: Union[Post, Comment]):
             content = elem.comment_view.comment.content
             name = elem.comment_view.post.name
             print(datetime.now().isoformat())
-            # print(content)
             if content is not None:
                 results = Detoxify('unbiased').predict(content)
                 print(results)
@@ -177,20 +175,16 @@ def process_content(elem: Union[Post, Comment]):
                 print('REPORT FOR COMMENT:')
                 print(flags)
                 print('***\n')
-
-                # if True:
                 try:
                     elem.create_report(reason='Detoxify bot: '+', '.join(flags))
                     print('****************\nREPORTED COMMENT\n******************')
                     db.add_outcome_to_comment(id, "Reported comment for: " + '|'.join(flags))
-                # else:
                 except Exception as e:
                     print(e)
                     print("ERROR: UNABLE TO CREATE REPORT")
-                    db.add_outcome_to_comment(id, "Failed to report comment for: " + '|'.join(flags))
+                    db.add_outcome_to_comment(id, "Failed to report comment for: " + '|'.join(flags)+" due to exception :" + traceback.format_exc())
             else:
                 db.add_outcome_to_comment(id, "No report")
-
         else:
             print('Already Assessed')
     elif isinstance(elem, Post):
@@ -256,8 +250,6 @@ def process_content(elem: Union[Post, Comment]):
                 print('REPORT FOR COMMENT:')
                 print(flags)
                 print('***\n')
-
-                # if True:
                 try:
                     post_report = elem.create_report(reason='Detoxify bot: '+', '.join(flags))
                     print('****************\nREPORTED POST\n******************')
@@ -265,11 +257,11 @@ def process_content(elem: Union[Post, Comment]):
                     if not 'error' in post_report.report_view:
                         db.add_outcome_to_post(id, "Reported Post for: " + '|'.join(flags))
                     else:
-                        raise "Error when reporting post"
+                        raise "Error when reporting post."
                 except Exception as e:
                     print(e)
                     print("ERROR: UNABLE TO CREATE REPORT")
-                    db.add_outcome_to_post(id, "Failed to report post for: " + '|'.join(flags))
+                    db.add_outcome_to_comment(id, "Failed to report post for: " + '|'.join(flags) + " due to exception :" + traceback.format_exc())
                 pass
             else:
                 db.add_outcome_to_post(id, "No report")
@@ -288,12 +280,9 @@ while True:
     directoryname = 'history'
     filename = 'history.db'
     db = Database(directoryname, filename)
-    # try:
     multi_stream = lemmy.multi_communities_stream(credentials.communities)
-    if True:
-    # try:
+    try:
         multi_stream.content_apply(process_content)
-    else:
-    # except:
+    except:
         print('Error in connection or stream.  Waiting 60s and trying again')
         sleep(60)

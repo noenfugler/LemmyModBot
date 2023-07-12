@@ -257,7 +257,7 @@ def process_content(elem: Union[Post, Comment]):
                     if not 'error' in post_report.report_view:
                         db.add_outcome_to_post(id, "Reported Post for: " + '|'.join(flags))
                     else:
-                        raise "Error when reporting post"
+                        raise "Error when reporting post."
                 except Exception as e:
                     print(e)
                     print("ERROR: UNABLE TO CREATE REPORT")

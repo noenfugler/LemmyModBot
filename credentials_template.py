@@ -11,3 +11,4 @@ identity_attack = 0.5
 insult = 0.99
 threat = 0.5
 sexually_explicit = 0.5
+total = 0.0

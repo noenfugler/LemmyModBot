@@ -18,6 +18,49 @@ class Database():
         my_directory = Path(self.directoryname)
         if not my_directory.is_dir():
             os.makedirs(self.directoryname)
+        conn = sqlite3.connect(self.directoryname + "/" + self.filename)
+        result = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='comments';")
+        try:
+            for row in result.fetchone():
+                pass
+        except:
+            sql = '''CREATE TABLE "comments" (
+                    "id"	INTEGER NOT NULL UNIQUE,
+                    "toxicity"	REAL,
+                    "severe_toxicity"	REAL,
+                    "obscene"	REAL,
+                    "identity_attack"	REAL,
+                    "insult"	REAL,
+                    "threat"	REAL,
+                    "sexual_explicit"	REAL,
+                    "outcome" TEXT,
+                    PRIMARY KEY("id")
+                );'''
+            result = conn.execute(sql)
+        result = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='posts';")
+        try:
+            for row in result.fetchone():
+                pass
+        except:
+            sql = '''CREATE TABLE "posts" (
+                "id"	INTEGER NOT NULL UNIQUE,
+                "name_toxicity"	REAL,
+                "name_severe_toxicity"	REAL,
+                "name_obscene"	REAL,
+                "name_identity_attack"	REAL,
+                "name_insult"	REAL,
+                "name_threat"	REAL,
+                "name_sexual_explicit"	REAL,
+                "body_toxicity"	REAL,
+                "body_severe_toxicity"	REAL,
+                "body_obscene"	REAL,
+                "body_identity_attack"	REAL,
+                "body_insult"	REAL,
+                "body_threat"	REAL,
+                "body_sexual_explicit"	REAL,
+            	"outcome"	TEXT,
+                PRIMARY KEY("id"));'''
+            result = conn.execute(sql)
 
     def in_comments_list(self,id):
         #check whether this comment (id) is stored in the database as having been previously checked
@@ -41,19 +84,56 @@ class Database():
         conn.close()
         return found
 
-    def add_to_comments_list(self, id):
+    def add_to_comments_list(self, id, results):
         # add a comment id to the list of previously checked comments
         conn = sqlite3.connect(self.directoryname + "/" + self.filename)
         # cur = conn.cursor()
-        sql = f'INSERT INTO comments(id) VALUES({id})'
+        # sql = f'INSERT INTO comments(id) VALUES({id})'
+        sql = f'''INSERT INTO comments(id, toxicity, severe_toxicity, obscene, identity_attack, 
+        insult, threat, sexual_explicit) VALUES{id, results['toxicity'], 
+        results['severe_toxicity'], results['obscene'], results['identity_attack'], 
+        results['insult'], results['threat'], results['sexual_explicit']};'''
+        # try:
         conn.execute(sql)
         conn.commit()
         conn.close()
 
-    def add_to_posts_list(self, id):
+    def add_outcome_to_comment(self, id, outcome):
+        # add an outcome to a comment
+        conn = sqlite3.connect(self.directoryname + "/" + self.filename)
+        # cur = conn.cursor()
+        # sql = f'INSERT INTO comments(id) VALUES({id})'
+        sql = f'''UPDATE comments SET outcome='{outcome}' WHERE id={id};'''
+        conn.execute(sql)
+        conn.commit()
+        conn.close()
+
+    def add_outcome_to_post(self, id, outcome):
+        # add an outcome to a post
+        conn = sqlite3.connect(self.directoryname + "/" + self.filename)
+        # cur = conn.cursor()
+        # sql = f'INSERT INTO comments(id) VALUES({id})'
+        sql = f'''UPDATE posts SET outcome='{outcome}' WHERE id={id};'''
+        conn.execute(sql)
+        conn.commit()
+        conn.close()
+
+
+    def add_to_posts_list(self, id, name_results, body_results):
         # add a post id to the list of previously checked posts
         conn = sqlite3.connect(self.directoryname + "/" + self.filename)
-        sql = f'INSERT INTO posts(id) VALUES({id});'
+        sql = f"""INSERT INTO posts(id, name_toxicity, name_severe_toxicity, name_obscene, name_identity_attack, 
+        name_insult, name_threat, name_sexual_explicit, body_toxicity, body_severe_toxicity, body_obscene, 
+        body_identity_attack, body_insult, body_threat, body_sexual_explicit) VALUES{id, name_results['toxicity'], 
+        name_results['severe_toxicity'], name_results['obscene'], name_results['identity_attack'], 
+        name_results['insult'], name_results['threat'], name_results['sexual_explicit'], body_results['toxicity'], 
+        body_results['severe_toxicity'], body_results['obscene'], body_results['identity_attack'], 
+        body_results['insult'], body_results['threat'], body_results['sexual_explicit']};"""
+        # print(sql)
+        # sql = f"""INSERT INTO posts(id, name_toxicity, name_severe_toxicity, name_obscene, name_identity_attack,
+        # name_insult, name_threat, name_sexual explicit, body_toxicity, body_severe_toxicity, body_obscene,
+        # body_identity_attack, body_insult, body_threat, body_sexual_explicit) VALUES({id}, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1);"""
+
         conn.execute(sql)
         conn.commit()
         conn.close()
@@ -89,22 +169,27 @@ def process_content(elem: Union[Post, Comment]):
                     flags.append('threat')
                 if results['sexual_explicit'] > credentials.sexually_explicit:
                     flags.append('sexual_explicit')
-            db.add_to_comments_list(id)
+            db.add_to_comments_list(id, results)
             if len(flags) > 0:
                 #we found something bad
                 print('***')
                 print('REPORT FOR COMMENT:')
                 print(flags)
                 print('***\n')
-                myfile = open("reports.txt", "a")
+
+                # if True:
                 try:
                     elem.create_report(reason='Detoxify bot. '+', '.join(flags))
                     print('****************\nREPORTED COMMENT\n******************')
-                    myfile.write(str(elem.post_view.post.id) + ", " + name + ", "+content[:50]+", " + '|'.join(flags)+", REPORTED COMMENT\n")
-                except:
+                    db.add_outcome_to_comment(id, "Reported comment for: " + '|'.join(flags))
+                # else:
+                except Exception as e:
+                    print(e)
                     print("ERROR: UNABLE TO CREATE REPORT")
-                    myfile.write(str(elem.post_view.post.id) + ", " + name + ", " + content[:50] + ", " + '|'.join(flags) + ", FAILED TO REPORT COMMENT\n")
-                myfile.close
+                    db.add_outcome_to_comment(id, "Failed to report comment for: " + '|'.join(flags))
+            else:
+                db.add_outcome_to_comment(id, "No report")
+
         else:
             print('Already Assessed')
     elif isinstance(elem, Post):
@@ -117,56 +202,77 @@ def process_content(elem: Union[Post, Comment]):
             body = elem.post_view.post.body
             print(datetime.now().isoformat())
             if name is not None:
-                results = Detoxify('unbiased').predict(name)
-                print(results)
-                if results['toxicity'] > credentials.toxicity:
+                name_results = Detoxify('unbiased').predict(name)
+                print(name_results)
+                total = name_results['toxicity'] + name_results['severe_toxicity'] + name_results['obscene'] + name_results['identity_attack'] + name_results['insult'] + name_results['threat'] + name_results['sexual_explicit']
+                print(total)
+                if name_results['toxicity'] > credentials.toxicity and total > credentials.total:
                     flags.append('toxicity')
-                if results['severe_toxicity'] > credentials.severe_toxicity:
+                if name_results['severe_toxicity'] > credentials.severe_toxicity and total > credentials.total:
                     flags.append('severe_toxicity')
-                if results['obscene'] > credentials.obscene:
+                if name_results['obscene'] > credentials.obscene and total > credentials.total:
                     flags.append('obscene')
-                if results['identity_attack'] > credentials.identity_attack:
+                if name_results['identity_attack'] > credentials.identity_attack and total > credentials.total:
                     flags.append('identity_attack')
-                if results['insult'] > credentials.insult:
+                if name_results['insult'] > credentials.insult and total > credentials.total:
                     flags.append('insult')
-                if results['threat'] > credentials.threat:
+                if name_results['threat'] > credentials.threat and total > credentials.total:
                     flags.append('threat')
-                if results['sexual_explicit'] > credentials.sexually_explicit:
+                if name_results['sexual_explicit'] > credentials.sexually_explicit and total > credentials.total:
                     flags.append('sexual_explicit')
             if body is not None:
-                results = Detoxify('unbiased').predict(body)
-                print(results)
-                if results['toxicity'] > credentials.toxicity:
+                body_results = Detoxify('unbiased').predict(body)
+                print(body_results)
+                total = body_results['toxicity'] + body_results['severe_toxicity'] + body_results['obscene'] + body_results['identity_attack'] + body_results['insult'] + body_results['threat'] + body_results['sexual_explicit']
+                print(total)
+                if body_results['toxicity'] > credentials.toxicity and total > credentials.total:
                     flags.append('toxicity')
-                if results['severe_toxicity'] > credentials.severe_toxicity:
+                if body_results['severe_toxicity'] > credentials.severe_toxicity and total > credentials.total:
                     flags.append('severe_toxicity')
-                if results['obscene'] > credentials.obscene:
+                if body_results['obscene'] > credentials.obscene and total > credentials.total:
                     flags.append('obscene')
-                if results['identity_attack'] > credentials.identity_attack:
+                if body_results['identity_attack'] > credentials.identity_attack and total > credentials.total:
                     flags.append('identity_attack')
-                if results['insult'] > credentials.insult:
+                if body_results['insult'] > credentials.insult and total > credentials.total:
                     flags.append('insult')
-                if results['threat'] > credentials.threat:
+                if body_results['threat'] > credentials.threat and total > credentials.total:
                     flags.append('threat')
-                if results['sexual_explicit'] > credentials.sexually_explicit:
+                if body_results['sexual_explicit'] > credentials.sexually_explicit and total > credentials.total:
                     flags.append('sexual_explicit')
-            db.add_to_posts_list(id)
+                db.add_to_posts_list(id, name_results, body_results)
+            else:
+                body_results = {}
+                body_results["toxicity"] = 0.0
+                body_results["severe_toxicity"] = 0.0
+                body_results["obscene"] = 0.0
+                body_results["identity_attack"] = 0.0
+                body_results["insult"] = 0.0
+                body_results["threat"] = 0.0
+                body_results["sexual_explicit"] = 0.0
+                db.add_to_posts_list(id, name_results, body_results)
             if len(flags) > 0:
                 print('***')
                 print('REPORT FOR COMMENT:')
                 print(flags)
                 print('***\n')
-                myfile = open("reports.txt", "a")
-                # try:
-                if True:
-                    elem.create_report(reason='Detoxify bot: '+', '.join(flags))
+
+                # if True:
+                try:
+                    post_report = elem.create_report(reason='Detoxify bot: '+', '.join(flags))
                     print('****************\nREPORTED POST\n******************')
-                    myfile.write(str(elem.post_view.post.id) + ", " + name + ", , " + '|'.join(flags)+", REPORTED POST\n")
-                # except:
-                else:
+                    ##TODO: depending on outcome of error handling changes to pylemmy, may need to add some further/alternate post error handling code here.
+                    if not 'error' in post_report.report_view:
+                        db.add_outcome_to_post(id, "Reported Post for: " + '|'.join(flags))
+                    else:
+                        raise "Error when reporting post"
+                except Exception as e:
+                    print(e)
                     print("ERROR: UNABLE TO CREATE REPORT")
-                    myfile.write(str(elem.post_view.post.id) + ", " + name + ", , " + '|'.join(flags) + ", FAILED TO REPORT POST\n")
-                myfile.close
+                    db.add_outcome_to_post(id, "Failed to report post for: " + '|'.join(flags))
+                pass
+            else:
+                db.add_outcome_to_post(id, "No report")
+
         else:
             print('Already Assessed')
 
@@ -183,8 +289,10 @@ while True:
     db = Database(directoryname, filename)
     # try:
     multi_stream = lemmy.multi_communities_stream(credentials.communities)
-    try:
+    if True:
+    # try:
         multi_stream.content_apply(process_content)
-    except:
+    else:
+    # except:
         print('Error in connection or stream.  Waiting 60s and trying again')
         sleep(60)

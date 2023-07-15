@@ -12,3 +12,4 @@ insult = 0.99
 threat = 0.5
 sexually_explicit = 0.5
 total = 0.0
+user_watch_list = ["https://lemmy.world/u/user1@instance1.com", "https://lemmy.world/u/user2@instance2.com"]

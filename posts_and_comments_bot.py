@@ -8,6 +8,8 @@ from pathlib import Path
 import sqlite3
 from typing import Union
 from datetime import datetime
+import logging
+import sys
 
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
@@ -15,6 +17,16 @@ from pylemmy.models.comment import Comment
 from detoxify import Detoxify
 import credentials
 
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter('[%(asctime)s %(levelname)s] %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 class Database:
     """ Object to handle the interactions with the SQLite database"""
@@ -159,7 +171,7 @@ def assess_content_toxicity(content):
     flags = []
     if content is not None:
         results = Detoxify('unbiased').predict(content)
-        print(results)
+        logger.info("Detofixy results: %s", results)
         total = results['toxicity'] + \
             results['severe_toxicity'] + \
             results['obscene'] + \
@@ -167,7 +179,7 @@ def assess_content_toxicity(content):
             results['insult'] + \
             results['threat'] + \
             results['sexual_explicit']
-        print(total)
+        logger.info("Content toxicity assessment total: %s", total)
         if results['toxicity'] > credentials.toxicity and total > credentials.total:
             flags.append('toxicity')
         if results['severe_toxicity'] > credentials.severe_toxicity and total > credentials.total:
@@ -194,7 +206,7 @@ def process_comment(elem):
     Update database accordingly"""
 
     comment_id = elem.comment_view.comment.id
-    print(f'\nCOMMENT {comment_id}:', elem.comment_view.comment.content)
+    logger.info('COMMENT %s: %s', comment_id, elem.comment_view.comment.content)
     if comment_id == 1123305:
         pass
     if not db.in_comments_list(comment_id):
@@ -202,7 +214,6 @@ def process_comment(elem):
         content = elem.comment_view.comment.content
         actor_id = elem.comment_view.creator.actor_id
 
-        print(datetime.now().isoformat())
         results = assess_content_toxicity(content)
 
         if actor_id in credentials.user_watch_list:
@@ -211,24 +222,19 @@ def process_comment(elem):
         db.add_to_comments_list(comment_id, results)
         if len(flags) > 0:
             # we found something bad
-            print('***')
-            print('REPORT FOR COMMENT:')
-            print(flags)
-            print('***\n')
+            logger.info('REPORT FOR COMMENT: %s', flags)
             try:
                 elem.create_report(reason='Detoxify bot: ' + ', '.join(flags))
-                print('****************\nREPORTED COMMENT\n******************')
+                logger.info('****************\nREPORTED COMMENT\n******************')
                 db.add_outcome_to_comment(comment_id, "Reported comment for: " + '|'.join(flags))
-            except Exception as exception_create_comment_report:
-                print(exception_create_comment_report)
-                print("ERROR: UNABLE TO CREATE REPORT")
-                print(traceback.format_exc())
+            except:
+                logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                 db.add_outcome_to_comment(comment_id, "Failed to report comment for: " + '|'.join(
                     flags) + " due to exception :" + traceback.format_exc())
         else:
             db.add_outcome_to_comment(comment_id, "No report")
     else:
-        print('Already Assessed')
+        logger.info('Comment Already Assessed')
 
 
 def process_post(elem):
@@ -236,7 +242,7 @@ def process_post(elem):
     Update database accordingly"""
 
     post_id = elem.post_view.post.id
-    print(f'\nPOST {post_id}:', elem.post_view.post.name)
+    logger.info('POST %s: %s', post_id, elem.post_view.post.name)
     if post_id == 638082:
         pass
     if not db.in_posts_list(post_id):
@@ -245,7 +251,6 @@ def process_post(elem):
         body = elem.post_view.post.body
         actor_id = elem.post_view.creator.actor_id
 
-        print(datetime.now().isoformat())
         name_results = assess_content_toxicity(name)
         body_results = assess_content_toxicity(body)
 
@@ -254,25 +259,20 @@ def process_post(elem):
 
         db.add_to_posts_list(post_id, name_results, body_results)
         if len(flags) > 0:
-            print('***')
-            print('REPORT FOR COMMENT:')
-            print(flags)
-            print('***\n')
+            logger.info('REPORT FOR POST: %s', flags)
             try:
                 elem.create_report(reason='Detoxify bot: ' + ', '.join(flags))
-                print('****************\nREPORTED POST\n******************')
+                logger.info('****************\nREPORTED POST\n******************')
                 db.add_outcome_to_post(post_id, "Reported Post for: " + '|'.join(flags))
-            except Exception as exception_create_post_report:
-                print(exception_create_post_report)
-                print("ERROR: UNABLE TO CREATE REPORT")
+            except:
+                logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                 db.add_outcome_to_comment(post_id, "Failed to report post for: " + '|'.join(
                     flags) + " due to exception :" + traceback.format_exc())
-            # pass
         else:
             db.add_outcome_to_post(post_id, "No report")
 
     else:
-        print('Already Assessed')
+        logger.info('Post Already Assessed')
 
 
 def process_content(elem: Union[Post, Comment]):
@@ -297,11 +297,13 @@ if __name__ == '__main__':
     DB_DIRECTORY_NAME = 'history'
     DB_FILE_NAME = 'history.db'
     db = Database(DB_DIRECTORY_NAME, DB_FILE_NAME)
+
+    logger.info("Bot starting!")
     while True:
         multi_stream = lemmy.multi_communities_stream(credentials.communities)
         try:
             multi_stream.content_apply(process_content)
-        except Exception as exception_process_content:
-            print(exception_process_content)
-            print('Error in connection, stream or process_content.  Waiting 30s and trying again')
+        except:
+            logger.error("Exception raised!", exc_info=True)
+            logger.error('Error in connection, stream or process_content.  Waiting 30s and trying again')
             sleep(30)

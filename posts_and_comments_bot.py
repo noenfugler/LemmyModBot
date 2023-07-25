@@ -10,6 +10,7 @@ from typing import Union
 from datetime import datetime
 import logging
 import sys
+import re
 
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
@@ -147,19 +148,19 @@ class Database:
         conn.commit()
         conn.close()
 
-    def add_to_posts_list(self, post_id, name_results, body_results):
+    def add_to_posts_list(self, post_id, detox_name_results, detox_body_results):
         """ add a post id to the list of previously checked posts """
 
         conn = sqlite3.connect(self.db_location)
         sql = f"""INSERT INTO posts(id, name_toxicity, name_severe_toxicity, name_obscene, 
         name_identity_attack, name_insult, name_threat, name_sexual_explicit, body_toxicity, 
         body_severe_toxicity, body_obscene, body_identity_attack, body_insult, body_threat, 
-        body_sexual_explicit) VALUES{post_id, name_results['toxicity'], 
-        name_results['severe_toxicity'], name_results['obscene'], name_results['identity_attack'],
-        name_results['insult'], name_results['threat'], name_results['sexual_explicit'], 
-        body_results['toxicity'], body_results['severe_toxicity'], body_results['obscene'], 
-        body_results['identity_attack'], body_results['insult'], body_results['threat'], 
-        body_results['sexual_explicit']};"""
+        body_sexual_explicit) VALUES{post_id, detox_name_results['toxicity'], 
+        detox_name_results['severe_toxicity'], detox_name_results['obscene'], detox_name_results['identity_attack'],
+        detox_name_results['insult'], detox_name_results['threat'], detox_name_results['sexual_explicit'], 
+        detox_body_results['toxicity'], detox_body_results['severe_toxicity'], detox_body_results['obscene'], 
+        detox_body_results['identity_attack'], detox_body_results['insult'], detox_body_results['threat'], 
+        detox_body_results['sexual_explicit']};"""
 
         conn.execute(sql)
         conn.commit()
@@ -207,24 +208,32 @@ def process_comment(elem):
 
     comment_id = elem.comment_view.comment.id
     logger.info('COMMENT %s: %s', comment_id, elem.comment_view.comment.content)
-    if comment_id == 1123305:
+    if comment_id == 1313063:
         pass
+        # Opportunity for some debugging here
     if not db.in_comments_list(comment_id):
         flags = []
         content = elem.comment_view.comment.content
         actor_id = elem.comment_view.creator.actor_id
 
+        # Detoxify
+
         results = assess_content_toxicity(content)
 
+        # Actor watch list
         if actor_id in credentials.user_watch_list:
             flags.append('user_watch_list')
 
+        # Regexp
+        # Nothing here yet
+
+        # Take action.
         db.add_to_comments_list(comment_id, results)
         if len(flags) > 0:
             # we found something bad
             logger.info('REPORT FOR COMMENT: %s', flags)
             try:
-                elem.create_report(reason='Detoxify bot: ' + ', '.join(flags))
+                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED COMMENT\n******************')
                 db.add_outcome_to_comment(comment_id, "Reported comment for: " + '|'.join(flags))
             except:
@@ -233,6 +242,7 @@ def process_comment(elem):
                     flags) + " due to exception :" + traceback.format_exc())
         else:
             db.add_outcome_to_comment(comment_id, "No report")
+        sleep(5)
     else:
         logger.info('Comment Already Assessed')
 
@@ -249,19 +259,35 @@ def process_post(elem):
         flags = []
         name = elem.post_view.post.name
         body = elem.post_view.post.body
+        community = elem.post_view.community.name
         actor_id = elem.post_view.creator.actor_id
 
-        name_results = assess_content_toxicity(name)
-        body_results = assess_content_toxicity(body)
-
+        # Actor in watch list?
         if actor_id in credentials.user_watch_list:
             flags.append('user_watch_list')
 
-        db.add_to_posts_list(post_id, name_results, body_results)
+        # Detox results
+        detox_name_results = assess_content_toxicity(name)
+        detox_body_results = assess_content_toxicity(body)
+
+        # Regexp
+        if community in credentials.question_communities:
+            question_re = re.compile('.*\?$')
+            regexp_name_result = question_re.match(name)
+            if body is not None:
+                regexp_body_result = question_re.match(body)
+            else:
+                regexp_body_result = False
+            if not (regexp_name_result or regexp_body_result) and community == "asklemmy":
+                flags.append('No ? mark')
+                print('\n\n*******REGEXP MATCH*******\n')
+
+        # Take action
+        db.add_to_posts_list(post_id, detox_name_results, detox_body_results)
         if len(flags) > 0:
             logger.info('REPORT FOR POST: %s', flags)
             try:
-                elem.create_report(reason='Detoxify bot: ' + ', '.join(flags))
+                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED POST\n******************')
                 db.add_outcome_to_post(post_id, "Reported Post for: " + '|'.join(flags))
             except:
@@ -270,10 +296,10 @@ def process_post(elem):
                     flags) + " due to exception :" + traceback.format_exc())
         else:
             db.add_outcome_to_post(post_id, "No report")
+        sleep(5)
 
     else:
         logger.info('Post Already Assessed')
-
 
 def process_content(elem: Union[Post, Comment]):
     """ the main doing function, called when a new post or comment is received"""
@@ -284,7 +310,6 @@ def process_content(elem: Union[Post, Comment]):
     elif isinstance(elem, Post):
         # It's a post
         process_post(elem)
-
 
 lemmy = Lemmy(
     lemmy_url=credentials.instance,
@@ -300,8 +325,8 @@ if __name__ == '__main__':
 
     logger.info("Bot starting!")
     while True:
-        multi_stream = lemmy.multi_communities_stream(credentials.communities)
         try:
+            multi_stream = lemmy.multi_communities_stream(credentials.communities)
             multi_stream.content_apply(process_content)
         except:
             logger.error("Exception raised!", exc_info=True)

@@ -3,6 +3,7 @@ username = "username here"
 password = "password here"
 instance = "https://lemmy.ml"
 communities = ["my_community1", "my_community2", "my_community3"]
+question_communities ["my_community2", "my_community3"] # A subset of communities that must have a question mark in the title or body of the post
 alt_username = 'username for real user who manages the bot.'
 toxicity = 0.99
 severe_toxicity = 0.5

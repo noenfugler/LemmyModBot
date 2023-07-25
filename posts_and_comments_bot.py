@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import sqlite3
 from typing import Union
-from datetime import datetime
 import logging
 import sys
 import re
@@ -28,6 +27,7 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('[%(asctime)s %(levelname)s] %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
 
 class Database:
     """ Object to handle the interactions with the SQLite database"""
@@ -172,7 +172,7 @@ def assess_content_toxicity(content):
     flags = []
     if content is not None:
         results = Detoxify('unbiased').predict(content)
-        logger.info("Detofixy results: %s", results)
+        logger.info("Detoxify results: %s", results)
         total = results['toxicity'] + \
             results['severe_toxicity'] + \
             results['obscene'] + \
@@ -278,7 +278,9 @@ def process_post(elem):
                 regexp_body_result = question_re.match(body)
             else:
                 regexp_body_result = False
-            if not (regexp_name_result or regexp_body_result) and community == "asklemmy":
+            if (not (regexp_name_result or regexp_body_result) \
+                    and (community in credentials.question_communities)
+                ):
                 flags.append('No ? mark')
                 print('\n\n*******REGEXP MATCH*******\n')
 
@@ -301,6 +303,7 @@ def process_post(elem):
     else:
         logger.info('Post Already Assessed')
 
+
 def process_content(elem: Union[Post, Comment]):
     """ the main doing function, called when a new post or comment is received"""
 
@@ -311,14 +314,14 @@ def process_content(elem: Union[Post, Comment]):
         # It's a post
         process_post(elem)
 
-lemmy = Lemmy(
-    lemmy_url=credentials.instance,
-    username=credentials.username,
-    password=credentials.password,
-    user_agent="custom user agent (by " + credentials.alt_username + ")",
-)
 
 if __name__ == '__main__':
+    lemmy = Lemmy(
+        lemmy_url=credentials.instance,
+        username=credentials.username,
+        password=credentials.password,
+        user_agent="custom user agent (by " + credentials.alt_username + ")",
+    )
     DB_DIRECTORY_NAME = 'history'
     DB_FILE_NAME = 'history.db'
     db = Database(DB_DIRECTORY_NAME, DB_FILE_NAME)
@@ -330,5 +333,7 @@ if __name__ == '__main__':
             multi_stream.content_apply(process_content)
         except:
             logger.error("Exception raised!", exc_info=True)
-            logger.error('Error in connection, stream or process_content.  Waiting 30s and trying again')
+            logger.error(
+                'Error in connection, stream or process_content.  Waiting 30s and trying again'
+            )
             sleep(30)

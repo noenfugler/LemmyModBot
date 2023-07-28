@@ -16,7 +16,15 @@ from pylemmy.models.post import Post
 from pylemmy.models.comment import Comment
 from detoxify import Detoxify
 import credentials
+from models import BoW
+import torch
+import numpy as np
+import torchtext
+import pandas as pd
+import pyautogui
+# from CTkMessagebox import CTkMessagebox
 
+import Bow2
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -28,6 +36,14 @@ formatter = logging.Formatter('[%(asctime)s %(levelname)s] %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+def clean_content(content):
+    content = content.replace("\n\r", " <br> ")
+    content = content.replace("\n", " <br> ")
+    content = content.replace("\r", " <br> ")
+    content = content.replace("\t", '    ')
+    content = content.replace('"', '~')
+    # content = content.replace("'", '~')
+    return content
 
 class Database:
     """ Object to handle the interactions with the SQLite database"""
@@ -166,10 +182,77 @@ class Database:
         conn.commit()
         conn.close()
 
+def initialise_bow(filename="data/train.tsv"):
+    # train_dataset_dict = load_dataset('text', data_files='data/train.tsv')
+    global tokenizer, vocab
+    global device
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+    all_data = pd.read_csv(filename, sep='\t', lineterminator='\n')
+    # train_data
+
+    tokenizer = torchtext.data.utils.get_tokenizer("basic_english")
+    max_length = 600
+    all_data['tokens'] = all_data.apply(lambda row: tokenizer(row['comment']), axis=1)
+
+    # build a vocabulary
+    vocab = torchtext.vocab.build_vocab_from_iterator(all_data['tokens'],
+                                                      min_freq=5,
+                                                      specials=['<unk>', '<pad>'])
+    vocab.set_default_index(vocab['<unk>'])
+    return len(vocab)
+
+def numericalize_data(example, vocab):
+    ids = [vocab[token] for token in example['tokens']]
+    return ids
+
+def multi_hot_data(example, num_classes):
+    encoded = np.zeros((num_classes,))
+    encoded[example['ids']] = 1
+    return encoded
+
+
+
+def assess_content_toxicity_bow(content):
+    global tokenizer
+    local_flags = []
+    my_tokens = {}
+    if content is not None:
+        content = clean_content(content)
+        my_tokens['tokens'] = tokenizer(content)
+        my_numericals = {}
+        my_numericals['ids'] = numericalize_data(my_tokens, vocab)
+        my_multi_hot = multi_hot_data(my_numericals, len(vocab))
+        inputs = torch.tensor(my_multi_hot).to(device)
+        # preds = model(inputs.float())
+        preds = model(inputs)
+        preds = preds.item()
+
+        if preds > 0.9:
+            local_flags.append('toxic')
+        print(f'{preds:04}')
+        is_toxic = input("[T]oxic, [S]kip, [N]ot toxic : ")
+        # is_toxic = CTkMessagebox(title="Toxic?", message=content + str(preds.item()),
+        #                     icon="warning", option_1="Toxic", option_2="Skip", option_3="Not toxic")
+        with open("data/train.tsv", "a") as myfile:
+            if is_toxic.upper() == "T":
+                print("Toxic")
+                myfile.write("\n" + content + '\t"{""toxic_content"":true}"')
+            elif is_toxic.upper() == "N":
+                print("Not toxic")
+                myfile.write("\n" + content + '\t"{""toxic_content"":false}"')
+            else:
+                print("Skipping")
+        myfile.close()
+        return {"toxicity":preds, "severe_toxicity": 0.0, "obscene": 0.0, "identity_attack": 0.0, "insult":0.0, "sexual_explicit":0.0, "threat": 0.0}, local_flags
+    else:
+        return None, None
 
 def assess_content_toxicity(content):
     """Process content using Detoxify and return results as a dictionary"""
-    flags = []
+    # flags = []
+    global flags
+
     if content is not None:
         results = Detoxify('unbiased').predict(content)
         logger.info("Detoxify results: %s", results)
@@ -203,7 +286,7 @@ def assess_content_toxicity(content):
 
 
 def process_comment(elem):
-    """Determine if the comment is new and if so run through detoxifier.  If toxic, then report.
+    """Determine if the comment is new and if so run through detoxifier.  If toxic, then rrt.
     Update database accordingly"""
 
     comment_id = elem.comment_view.comment.id
@@ -218,8 +301,9 @@ def process_comment(elem):
 
         # Detoxify
 
-        results = assess_content_toxicity(content)
-
+        # results = assess_content_toxicity(content)
+        results, returned_flags = assess_content_toxicity_bow(content)
+        flags = flags + returned_flags
         # Actor watch list
         if actor_id in credentials.user_watch_list:
             flags.append('user_watch_list')
@@ -233,7 +317,7 @@ def process_comment(elem):
             # we found something bad
             logger.info('REPORT FOR COMMENT: %s', flags)
             try:
-                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                # elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED COMMENT\n******************')
                 db.add_outcome_to_comment(comment_id, "Reported comment for: " + '|'.join(flags))
             except:
@@ -242,6 +326,7 @@ def process_comment(elem):
                     flags) + " due to exception :" + traceback.format_exc())
         else:
             db.add_outcome_to_comment(comment_id, "No report")
+            pass
         sleep(5)
     else:
         logger.info('Comment Already Assessed')
@@ -267,9 +352,17 @@ def process_post(elem):
             flags.append('user_watch_list')
 
         # Detox results
-        detox_name_results = assess_content_toxicity(name)
-        detox_body_results = assess_content_toxicity(body)
-
+        # detox_name_results = assess_content_toxicity(name)
+        # detox_body_results = assess_content_toxicity(body)
+        # BoW Results
+        detox_name_results, local_flags_name = assess_content_toxicity_bow(name)
+        if body is not None:
+            detox_body_results, local_flags_body = assess_content_toxicity_bow(body)
+            local_flags = list(set(local_flags_name + local_flags_body))
+            flags = flags + local_flags
+        else:
+            flags = flags + local_flags_name
+            detox_body_results = {"toxicity":0.0, "severe_toxicity": 0.0, "obscene": 0.0, "identity_attack": 0.0, "insult":0.0, "sexual_explicit":0.0, "threat": 0.0}
         # Regexp
         if community in credentials.question_communities:
             question_re = re.compile('.*\?$')
@@ -289,7 +382,7 @@ def process_post(elem):
         if len(flags) > 0:
             logger.info('REPORT FOR POST: %s', flags)
             try:
-                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                # elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED POST\n******************')
                 db.add_outcome_to_post(post_id, "Reported Post for: " + '|'.join(flags))
             except:
@@ -298,6 +391,7 @@ def process_post(elem):
                     flags) + " due to exception :" + traceback.format_exc())
         else:
             db.add_outcome_to_post(post_id, "No report")
+            pass
         sleep(5)
 
     else:
@@ -326,7 +420,13 @@ if __name__ == '__main__':
     DB_FILE_NAME = 'history.db'
     db = Database(DB_DIRECTORY_NAME, DB_FILE_NAME)
 
+    vocab_size = initialise_bow()
+    model = BoW(vocab_size=vocab_size)
+    model.load_state_dict(torch.load("model.mdl"))
+    model.eval()
+
     logger.info("Bot starting!")
+
     while True:
         try:
             multi_stream = lemmy.multi_communities_stream(credentials.communities)

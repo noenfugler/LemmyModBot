@@ -21,7 +21,7 @@ import torch
 import numpy as np
 import torchtext
 import pandas as pd
-import pyautogui
+# import pyautogui
 # from CTkMessagebox import CTkMessagebox
 
 import Bow2
@@ -37,11 +37,12 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 def clean_content(content):
-    content = content.replace("\n\r", " <br> ")
-    content = content.replace("\n", " <br> ")
-    content = content.replace("\r", " <br> ")
-    content = content.replace("\t", '    ')
-    content = content.replace('"', '~')
+    content = content.replace("\n\r", " ")
+    content = content.replace("\n", " ")
+    content = content.replace("\r", " ")
+    content = content.replace("\t", ' ')
+    content = content.replace("<br>", " ")
+    # content = content.replace('"', '~')
     # content = content.replace("'", '~')
     return content
 
@@ -186,6 +187,9 @@ def initialise_bow(filename="data/train.tsv"):
     # train_dataset_dict = load_dataset('text', data_files='data/train.tsv')
     global tokenizer, vocab
     global device
+
+    torch.set_default_dtype(torch.float64)
+
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     all_data = pd.read_csv(filename, sep='\t', lineterminator='\n')
@@ -214,6 +218,7 @@ def multi_hot_data(example, num_classes):
 
 
 def assess_content_toxicity_bow(content):
+    global TP, FP, TN, FN
     global tokenizer
     local_flags = []
     my_tokens = {}
@@ -224,13 +229,15 @@ def assess_content_toxicity_bow(content):
         my_numericals['ids'] = numericalize_data(my_tokens, vocab)
         my_multi_hot = multi_hot_data(my_numericals, len(vocab))
         inputs = torch.tensor(my_multi_hot).to(device)
-        # preds = model(inputs.float())
+        # if inputs.dtype != torch.float64:
+        #     inputs = inputs.float()
         preds = model(inputs)
-        preds = preds.item()
+        preds2 = (1-torch.argmax(preds, dim=-1)).item()
 
-        if preds > 0.9:
-            local_flags.append('toxic')
-        print(f'{preds:04}')
+        # if preds2 == 1:
+        #     local_flags.append('toxic')
+        print('\n\n'+content)
+        print(f'{preds}', (1-torch.argmax(preds)).item())
         is_toxic = input("[T]oxic, [S]kip, [N]ot toxic : ")
         # is_toxic = CTkMessagebox(title="Toxic?", message=content + str(preds.item()),
         #                     icon="warning", option_1="Toxic", option_2="Skip", option_3="Not toxic")
@@ -238,15 +245,27 @@ def assess_content_toxicity_bow(content):
             if is_toxic.upper() == "T":
                 print("Toxic")
                 myfile.write("\n" + content + '\t"{""toxic_content"":true}"')
+                local_flags.append('toxic')
+                if preds2 == 1:
+                    TP += 1
+                else:
+                    FN += 1
             elif is_toxic.upper() == "N":
                 print("Not toxic")
                 myfile.write("\n" + content + '\t"{""toxic_content"":false}"')
+                if preds2 == 1:
+                    FP += 1
+                else:
+                    TN += 1
             else:
                 print("Skipping")
+            print("TP, FP", TP, FP)
+            print("FN, TN", FN, TN)
         myfile.close()
-        return {"toxicity":preds, "severe_toxicity": 0.0, "obscene": 0.0, "identity_attack": 0.0, "insult":0.0, "sexual_explicit":0.0, "threat": 0.0}, local_flags
+        return {"toxicity":preds2, "severe_toxicity": 0.0, "obscene": 0.0, "identity_attack": 0.0, "insult":0.0, "sexual_explicit":0.0, "threat": 0.0}, local_flags
     else:
         return None, None
+    sleep(5)
 
 def assess_content_toxicity(content):
     """Process content using Detoxify and return results as a dictionary"""
@@ -317,7 +336,7 @@ def process_comment(elem):
             # we found something bad
             logger.info('REPORT FOR COMMENT: %s', flags)
             try:
-                # elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED COMMENT\n******************')
                 db.add_outcome_to_comment(comment_id, "Reported comment for: " + '|'.join(flags))
             except:
@@ -382,7 +401,7 @@ def process_post(elem):
         if len(flags) > 0:
             logger.info('REPORT FOR POST: %s', flags)
             try:
-                # elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED POST\n******************')
                 db.add_outcome_to_post(post_id, "Reported Post for: " + '|'.join(flags))
             except:
@@ -427,6 +446,10 @@ if __name__ == '__main__':
 
     logger.info("Bot starting!")
 
+    TP = 0
+    FP = 0
+    TN = 0
+    FN = 0
     while True:
         try:
             multi_stream = lemmy.multi_communities_stream(credentials.communities)

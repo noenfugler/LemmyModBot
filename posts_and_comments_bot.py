@@ -476,7 +476,6 @@ if __name__ == '__main__':
     FP = 0
     TN = 0
     FN = 0
-
     mydelay = DelayManager()
 
     while True:

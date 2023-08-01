@@ -64,7 +64,6 @@ def numericalize_data(example, vocab):
 all_data['ids'] = all_data.apply(lambda row : numericalize_data(row, vocab), axis = 1)
 # print(all_data)
 
-
 def multi_hot_data(example, num_classes):
     encoded = np.zeros((num_classes,))
     encoded[example['ids']] = 1

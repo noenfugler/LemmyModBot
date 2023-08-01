@@ -10,6 +10,7 @@ from typing import Union
 import logging
 import sys
 import re
+import datetime as dt
 
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
@@ -238,31 +239,33 @@ def assess_content_toxicity_bow(content):
         #     local_flags.append('toxic')
         print('\n\n'+content)
         print(f'{preds}', (1-torch.argmax(preds)).item())
-        is_toxic = input("[T]oxic, [S]kip, [N]ot toxic : ")
+        # is_toxic = input("[T]oxic, [S]kip, [N]ot toxic : ")
         # is_toxic = CTkMessagebox(title="Toxic?", message=content + str(preds.item()),
         #                     icon="warning", option_1="Toxic", option_2="Skip", option_3="Not toxic")
-        with open("data/train.tsv", "a") as myfile:
-            if is_toxic.upper() == "T":
-                print("Toxic")
-                myfile.write("\n" + content + '\t"{""toxic_content"":true}"')
-                local_flags.append('toxic')
-                if preds2 == 1:
-                    TP += 1
-                else:
-                    FN += 1
-            elif is_toxic.upper() == "N":
-                print("Not toxic")
-                myfile.write("\n" + content + '\t"{""toxic_content"":false}"')
-                if preds2 == 1:
-                    FP += 1
-                else:
-                    TN += 1
-            else:
-                print("Skipping")
-            print("TP, FP", TP, FP)
-            print("FN, TN", FN, TN)
-        myfile.close()
-        return {"toxicity":preds2, "severe_toxicity": 0.0, "obscene": 0.0, "identity_attack": 0.0, "insult":0.0, "sexual_explicit":0.0, "threat": 0.0}, local_flags
+        # with open("data/train.tsv", "a") as myfile:
+        if preds2 == 1:
+            sleep(15)
+            # print("Toxic")
+            # myfile.write("\n" + content + '\t"{""toxic_content"":true}"')
+            local_flags.append('toxic')
+            # if preds2 == 1:
+            # TP += 1
+            # else:
+            #     FN += 1
+        # elif is_toxic.upper() == "N":
+        # else:
+            # print("Not toxic")
+            # myfile.write("\n" + content + '\t"{""toxic_content"":false}"')
+            # if preds2 == 1:
+            #     FP += 1
+            # else:
+            #     TN += 1
+        # else:
+        #     print("Skipping")
+        # print("TP, FP", TP, FP)
+        # print("FN, TN", FN, TN)
+        # myfile.close()
+        return {"toxicity":(preds[0]-preds[1]).item(), "severe_toxicity": 0.0, "obscene": 0.0, "identity_attack": 0.0, "insult":0.0, "sexual_explicit":0.0, "threat": 0.0}, local_flags
     else:
         return None, None
     sleep(5)
@@ -427,6 +430,29 @@ def process_content(elem: Union[Post, Comment]):
         # It's a post
         process_post(elem)
 
+class DelayManager:
+    """ This class creates an object to provide escalating wait times when the server times out.
+    The first wait should be 30sec, the second should be 60sec, etc up until a maximum of 5min between
+    attempts.  If there are no calls to this object within the reset time period (6 mins), it resets to
+    the start again."""
+    def __init__(self):
+        self.count = 1
+        self.last_time = dt.datetime.now()
+        self.wait_increment = 30    # each iteration is this much longer
+        self.max_count = 10         # Maximum wait in iterations
+        self.reset_time = 360       # reset self.count after going this long without wait being called.
+
+    def wait(self):
+        if (dt.datetime.now() - self.last_time).total_seconds() > self.reset_time:
+            self.count = 1
+        logger.error(
+            f'Error in connection, stream or process_content.  Waiting {self.count*self.wait_increment} seconds and trying again'
+        )
+        sleep(self.count*self.wait_increment)
+        self.count += 1
+        if self.count > self.max_count:
+            self.count = self.max_count
+        self.last_time = dt.datetime.now()
 
 if __name__ == '__main__':
     lemmy = Lemmy(
@@ -450,13 +476,13 @@ if __name__ == '__main__':
     FP = 0
     TN = 0
     FN = 0
+
+    mydelay = DelayManager()
+
     while True:
         try:
             multi_stream = lemmy.multi_communities_stream(credentials.communities)
             multi_stream.content_apply(process_content)
         except:
             logger.error("Exception raised!", exc_info=True)
-            logger.error(
-                'Error in connection, stream or process_content.  Waiting 30s and trying again'
-            )
-            sleep(30)
+            mydelay.wait()

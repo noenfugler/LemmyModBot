@@ -127,7 +127,7 @@ model.double()
 # Define the optimiser and tell it what parameters to update, as well as the loss function
 # The following assignments were adjusted during tuning
 learning_rate = 0.001
-num_epochs = 8
+num_epochs = 6
 
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 loss_fn = nn.CrossEntropyLoss().to(device)

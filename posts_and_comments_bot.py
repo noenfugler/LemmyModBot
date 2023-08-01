@@ -430,7 +430,7 @@ def process_content(elem: Union[Post, Comment]):
         # It's a post
         process_post(elem)
 
-class DelayManager:
+class ReconnectionDelayManager:
     """ This class creates an object to provide escalating wait times when the server times out.
     The first wait should be 30sec, the second should be 60sec, etc up until a maximum of 5min between
     attempts.  If there are no calls to this object within the reset time period (6 mins), it resets to
@@ -476,7 +476,7 @@ if __name__ == '__main__':
     FP = 0
     TN = 0
     FN = 0
-    mydelay = DelayManager()
+    mydelay = ReconnectionDelayManager()
 
     while True:
         try:

@@ -93,7 +93,7 @@ all_data['not_toxic_content'] = all_data['not_toxic_content'].astype(int)
 
 all_data = all_data[['multi_hot', 'toxic_content', 'not_toxic_content']] #, 'not_toxic', 'unclear', 'other_tick']]
 # all_data
-train_data, valid_data = train_test_split(all_data, test_size=0.4, random_state=2)
+train_data, valid_data = train_test_split(all_data, test_size=0.1, random_state=2)
 # valid_data, test_data = train_test_split(non_train_data, test_size=0.333, random_state=0)
 # train_data.reset_index(drop=True, inplace=True)
 # valid_data.reset_index(drop=True, inplace=True)
@@ -127,7 +127,7 @@ model.double()
 # Define the optimiser and tell it what parameters to update, as well as the loss function
 # The following assignments were adjusted during tuning
 learning_rate = 0.001
-num_epochs = 6
+num_epochs = 5
 
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 loss_fn = nn.CrossEntropyLoss().to(device)

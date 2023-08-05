@@ -339,7 +339,7 @@ def process_comment(elem):
             # we found something bad
             logger.info('REPORT FOR COMMENT: %s', flags)
             try:
-                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                # elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED COMMENT\n******************')
                 db.add_outcome_to_comment(comment_id, "Reported comment for: " + '|'.join(flags))
             except:
@@ -387,7 +387,7 @@ def process_post(elem):
             detox_body_results = {"toxicity":0.0, "severe_toxicity": 0.0, "obscene": 0.0, "identity_attack": 0.0, "insult":0.0, "sexual_explicit":0.0, "threat": 0.0}
         # Regexp
         if community in credentials.question_communities:
-            question_re = re.compile('.*\?$')
+            question_re = re.compile('.*\?')
             regexp_name_result = question_re.match(name)
             if body is not None:
                 regexp_body_result = question_re.match(body)
@@ -404,7 +404,7 @@ def process_post(elem):
         if len(flags) > 0:
             logger.info('REPORT FOR POST: %s', flags)
             try:
-                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                # elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED POST\n******************')
                 db.add_outcome_to_post(post_id, "Reported Post for: " + '|'.join(flags))
             except:

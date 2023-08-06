@@ -271,7 +271,8 @@ def process_comment(elem):
             # we found something bad
             logger.info('REPORT FOR COMMENT: %s', flags)
             try:
-                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                if not credentials.debug_mode:
+                    elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED COMMENT\n******************')
                 db.add_outcome_to_comment(comment_id, "Reported comment for: " + '|'.join(flags))
             except:
@@ -338,7 +339,8 @@ def process_post(elem):
         if len(flags) > 0:
             logger.info('REPORT FOR POST: %s', flags)
             try:
-                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                if not credentials.debug_mode:
+                    elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED POST\n******************')
                 db.add_outcome_to_post(post_id, "Reported Post for: " + '|'.join(flags))
             except:

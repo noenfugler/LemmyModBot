@@ -10,13 +10,20 @@ from typing import Union
 import logging
 import sys
 import re
+import datetime as dt
+import torch
+import numpy as np
+import torchtext
+import pandas as pd
 
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
 from pylemmy.models.comment import Comment
-from detoxify import Detoxify
 import credentials
+from models import BoW
+from build_model import build_bow_model
 
+build_bow_model()
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -28,6 +35,17 @@ formatter = logging.Formatter('[%(asctime)s %(levelname)s] %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+def clean_content(content):
+    """Tidy up content to remove unwanted characters before processing text"""
+
+    content = content.replace("\n\r", " ")
+    content = content.replace("\n", " ")
+    content = content.replace("\r", " ")
+    content = content.replace("\t", ' ')
+    content = content.replace("<br>", " ")
+    # content = content.replace('"', '~')
+    # content = content.replace("'", '~')
+    return content
 
 class Database:
     """ Object to handle the interactions with the SQLite database"""
@@ -41,12 +59,7 @@ class Database:
         create_comments_table_sql = '''CREATE TABLE "comments" (
                                         "id"	INTEGER NOT NULL UNIQUE,
                                         "toxicity"	REAL,
-                                        "severe_toxicity"	REAL,
-                                        "obscene"	REAL,
-                                        "identity_attack"	REAL,
-                                        "insult"	REAL,
-                                        "threat"	REAL,
-                                        "sexual_explicit"	REAL,
+                                        "non_toxicity"	REAL,
                                         "outcome" TEXT,
                                         PRIMARY KEY("id")
         );'''
@@ -54,19 +67,9 @@ class Database:
         create_posts_table_sql = '''CREATE TABLE "posts" (
                                 "id"	INTEGER NOT NULL UNIQUE,
                                 "name_toxicity"	REAL,
-                                "name_severe_toxicity"	REAL,
-                                "name_obscene"	REAL,
-                                "name_identity_attack"	REAL,
-                                "name_insult"	REAL,
-                                "name_threat"	REAL,
-                                "name_sexual_explicit"	REAL,
+                                "name_non_toxicity"	REAL,
                                 "body_toxicity"	REAL,
-                                "body_severe_toxicity"	REAL,
-                                "body_obscene"	REAL,
-                                "body_identity_attack"	REAL,
-                                "body_insult"	REAL,
-                                "body_threat"	REAL,
-                                "body_sexual_explicit"	REAL,
+                                "body_non_toxicity"	REAL,
                                 "outcome"	TEXT,
                                 PRIMARY KEY("id"));'''
         self.check_table_exists('posts', create_posts_table_sql)
@@ -118,10 +121,8 @@ class Database:
         """ add a comment id to the list of previously checked comments in the database """
 
         conn = sqlite3.connect(self.db_location)
-        sql = f'''INSERT INTO comments(id, toxicity, severe_toxicity, obscene, identity_attack, 
-        insult, threat, sexual_explicit) VALUES{comment_id, results['toxicity'],
-        results['severe_toxicity'], results['obscene'], results['identity_attack'],
-        results['insult'], results['threat'], results['sexual_explicit']};'''
+        sql = f'''INSERT INTO comments(id, toxicity, non_toxicity) VALUES{comment_id, 
+        results['toxicity'], results['non_toxicity']};'''
         # try:
         conn.execute(sql)
         conn.commit()
@@ -152,58 +153,94 @@ class Database:
         """ add a post id to the list of previously checked posts """
 
         conn = sqlite3.connect(self.db_location)
-        sql = f"""INSERT INTO posts(id, name_toxicity, name_severe_toxicity, name_obscene, 
-        name_identity_attack, name_insult, name_threat, name_sexual_explicit, body_toxicity, 
-        body_severe_toxicity, body_obscene, body_identity_attack, body_insult, body_threat, 
-        body_sexual_explicit) VALUES{post_id, detox_name_results['toxicity'], 
-        detox_name_results['severe_toxicity'], detox_name_results['obscene'], detox_name_results['identity_attack'],
-        detox_name_results['insult'], detox_name_results['threat'], detox_name_results['sexual_explicit'], 
-        detox_body_results['toxicity'], detox_body_results['severe_toxicity'], detox_body_results['obscene'], 
-        detox_body_results['identity_attack'], detox_body_results['insult'], detox_body_results['threat'], 
-        detox_body_results['sexual_explicit']};"""
+        sql = f"""INSERT INTO posts(id, name_toxicity, name_non_toxicity, 
+        body_toxicity, body_non_toxicity) VALUES{post_id, 
+        detox_name_results['toxicity'], detox_name_results['non_toxicity'], 
+        detox_body_results['toxicity'], detox_body_results['non_toxicity'], };"""
 
         conn.execute(sql)
         conn.commit()
         conn.close()
 
+def initialise_bow(filename="data/train.tsv"):
+    """
+    Load the data and set up the tokenizer and dataset for creating/training/using the model.
 
-def assess_content_toxicity(content):
-    """Process content using Detoxify and return results as a dictionary"""
-    flags = []
+    :param filename: file path and location for the dataset
+    :return len(vocab): the length of the vocabulary
+    """
+
+    global tokenizer, vocab, device
+
+    torch.set_default_dtype(torch.float64)
+
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+    all_data = pd.read_csv(filename, sep='\t', lineterminator='\n')
+    # train_data
+
+    tokenizer = torchtext.data.utils.get_tokenizer("basic_english")
+    all_data['tokens'] = all_data.apply(lambda row: tokenizer(row['comment']), axis=1)
+
+    # build a vocabulary
+    vocab = torchtext.vocab.build_vocab_from_iterator(all_data['tokens'],
+                                                      min_freq=5,
+                                                      specials=['<unk>', '<pad>'])
+    vocab.set_default_index(vocab['<unk>'])
+    return len(vocab)
+
+def numericalize_data(example, vocab):
+    """ Convert tokens into vocabulary index."""
+    ids = [vocab[token] for token in example['tokens']]
+    return ids
+
+def multi_hot_data(example, num_classes):
+    """ Convert to a mult-hot list for training/assessment"""
+    encoded = np.zeros((num_classes,))
+    encoded[example['ids']] = 1
+    return encoded
+
+
+
+def assess_content_toxicity_bow(content):
+    """Use the pretrained deep learning model model.mdl to
+    classify content as either toxic or not"""
+
+    # global device
+    local_flags = []
+    my_tokens = {}
     if content is not None:
-        results = Detoxify('unbiased').predict(content)
-        logger.info("Detoxify results: %s", results)
-        total = results['toxicity'] + \
-            results['severe_toxicity'] + \
-            results['obscene'] + \
-            results['identity_attack'] + \
-            results['insult'] + \
-            results['threat'] + \
-            results['sexual_explicit']
-        logger.info("Content toxicity assessment total: %s", total)
-        if results['toxicity'] > credentials.toxicity and total > credentials.total:
-            flags.append('toxicity')
-        if results['severe_toxicity'] > credentials.severe_toxicity and total > credentials.total:
-            flags.append('severe_toxicity')
-        if results['obscene'] > credentials.obscene and total > credentials.total:
-            flags.append('obscene')
-        if results['identity_attack'] > credentials.identity_attack and total > credentials.total:
-            flags.append('identity_attack')
-        if results['insult'] > credentials.insult and total > credentials.total:
-            flags.append('insult')
-        if results['threat'] > credentials.threat and total > credentials.total:
-            flags.append('threat')
-        if results['sexual_explicit'] > credentials.sexually_explicit and total > credentials.total:
-            flags.append('sexual_explicit')
+        content = clean_content(content)
+        my_tokens['tokens'] = tokenizer(content)
+        my_numericals = {}
+        my_numericals['ids'] = numericalize_data(my_tokens, vocab)
+        my_multi_hot = multi_hot_data(my_numericals, len(vocab))
+        inputs = torch.tensor(my_multi_hot).to(device)
+        # if inputs.dtype != torch.float64:
+        #     inputs = inputs.float()
+        preds = model(inputs)
+        preds2 = (1-torch.argmax(preds, dim=-1)).item()
+        preds3 = abs(preds[0].item() - preds[1].item())
 
+        print('\n\n'+content)
+        print(f'{preds}', (1-torch.argmax(preds)).item())
+        if preds[0].item() < 0.2 and preds[1].item() < 0.2:
+            print("Low values^")
+        if abs(preds[0].item() - preds[1].item()) < 0.2 :
+            print("Close values^")
+        if preds2 == 1 and preds3 >= 0.2:
+            sleep(15)
+            local_flags.append('toxic')
+        return {"toxicity":preds[0].item(),
+                "non_toxicity": preds[1].item(),
+                }, local_flags
     else:
-        results = {"toxicity": 0.0, "severe_toxicity": 0.0, "obscene": 0.0, "identity_attack": 0.0,
-                   "insult": 0.0, "threat": 0.0, "sexual_explicit": 0.0}
-    return results
+        return None, None
+    sleep(5)
 
 
 def process_comment(elem):
-    """Determine if the comment is new and if so run through detoxifier.  If toxic, then report.
+    """Determine if the comment is new and if so run through detoxifier.  If toxic, then rrt.
     Update database accordingly"""
 
     comment_id = elem.comment_view.comment.id
@@ -218,8 +255,9 @@ def process_comment(elem):
 
         # Detoxify
 
-        results = assess_content_toxicity(content)
-
+        # results = assess_content_toxicity(content)
+        results, returned_flags = assess_content_toxicity_bow(content)
+        flags = flags + returned_flags
         # Actor watch list
         if actor_id in credentials.user_watch_list:
             flags.append('user_watch_list')
@@ -267,12 +305,23 @@ def process_post(elem):
             flags.append('user_watch_list')
 
         # Detox results
-        detox_name_results = assess_content_toxicity(name)
-        detox_body_results = assess_content_toxicity(body)
-
+        # detox_name_results = assess_content_toxicity(name)
+        # detox_body_results = assess_content_toxicity(body)
+        # BoW Results
+        detox_name_results, local_flags_name = assess_content_toxicity_bow(name)
+        if body is not None:
+            detox_body_results, local_flags_body = assess_content_toxicity_bow(body)
+            local_flags = list(set(local_flags_name + local_flags_body))
+            flags = flags + local_flags
+        else:
+            flags = flags + local_flags_name
+            detox_body_results = {
+                "toxicity":0.0,
+                "non_toxicity": 0.0
+            }
         # Regexp
         if community in credentials.question_communities:
-            question_re = re.compile('.*\?$')
+            question_re = re.compile('.*\?')
             regexp_name_result = question_re.match(name)
             if body is not None:
                 regexp_body_result = question_re.match(body)
@@ -314,6 +363,43 @@ def process_content(elem: Union[Post, Comment]):
         # It's a post
         process_post(elem)
 
+class ReconnectionDelayManager:
+    """ This class creates an object to provide escalating wait times when the server times out.
+    The first wait should be 30sec, the second should be 60sec, etc up until a maximum of 5min
+    between attempts.  If there are no calls to this object within the reset time period (6 mins),
+    it resets to the start again."""
+    def __init__(self, wait_increment = 30, max_count = 10, reset_time = 360):
+        self.count = 1
+        self.last_time = dt.datetime.now()
+
+        # each iteration is this much longer
+        self.wait_increment = wait_increment
+
+        # Maximum wait in iterations
+        self.max_count = max_count
+
+        # reset self.count after going this long without wait being called.
+        self.reset_time = reset_time
+
+    def wait(self):
+        """This method waits the current delay period and updates the next delay period"""
+
+        if (dt.datetime.now() - self.last_time).total_seconds() > self.reset_time:
+            self.count = 1
+        wait_time = self.count*self.wait_increment
+        logger.error(
+            f"""Error in connection, stream or process_content.  
+            Waiting {wait_time} seconds and trying again"""
+        )
+        sleep(self.count*self.wait_increment)
+        self.count += 1
+        if self.count > self.max_count:
+            self.count = self.max_count
+        self.last_time = dt.datetime.now()
+
+    def reset(self):
+        """ Reset the manager"""
+        self.count = 1
 
 if __name__ == '__main__':
     lemmy = Lemmy(
@@ -326,14 +412,19 @@ if __name__ == '__main__':
     DB_FILE_NAME = 'history.db'
     db = Database(DB_DIRECTORY_NAME, DB_FILE_NAME)
 
+    vocab_size = initialise_bow()
+    model = BoW(vocab_size=vocab_size)
+    model.load_state_dict(torch.load("model.mdl"))
+    model.eval()
+
     logger.info("Bot starting!")
+
+    mydelay = ReconnectionDelayManager()
+
     while True:
         try:
             multi_stream = lemmy.multi_communities_stream(credentials.communities)
             multi_stream.content_apply(process_content)
         except:
             logger.error("Exception raised!", exc_info=True)
-            logger.error(
-                'Error in connection, stream or process_content.  Waiting 30s and trying again'
-            )
-            sleep(30)
+            mydelay.wait()

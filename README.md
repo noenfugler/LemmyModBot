@@ -1,4 +1,6 @@
 # LemmyModBot
-A Lemmy bot written in Python to detect and report toxic written content.  LemmModBot uses [pylemmy](https://github.com/dcferreira/pylemmy) and [detoxify](https://github.com/unitaryai/detoxify).
+A Lemmy bot written in Python to detect and report toxic written content on Lemmy communities.  LemmModBot uses [pylemmy](https://github.com/dcferreira/pylemmy) to access comment and create reports.  Text classification is done using a 512-64-2 bag of words Deep NN using Pytorch.
 
-Pylemmy exposes the Lemmy API to Python, and Detoxify applies a pre-trained text classification model to detect hate speech.
+Local Dataset is used for training and TODO: will be updated by mod decisions.
+
+This bot is a work in progress and is expected to expand and grow.

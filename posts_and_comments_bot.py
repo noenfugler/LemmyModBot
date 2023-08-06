@@ -234,16 +234,19 @@ def assess_content_toxicity_bow(content):
         #     inputs = inputs.float()
         preds = model(inputs)
         preds2 = (1-torch.argmax(preds, dim=-1)).item()
+        preds3 = abs(preds[0].item() - preds[1].item())
 
-        # if preds2 == 1:
-        #     local_flags.append('toxic')
         print('\n\n'+content)
         print(f'{preds}', (1-torch.argmax(preds)).item())
         # is_toxic = input("[T]oxic, [S]kip, [N]ot toxic : ")
         # is_toxic = CTkMessagebox(title="Toxic?", message=content + str(preds.item()),
         #                     icon="warning", option_1="Toxic", option_2="Skip", option_3="Not toxic")
         # with open("data/train.tsv", "a") as myfile:
-        if preds2 == 1:
+        if preds[0].item() < 0.2 and preds[1].item() < 0.2:
+            print("Low values^")
+        if abs(preds[0].item() - preds[1].item()) < 0.2 :
+            print("Close values^")
+        if preds2 == 1 and preds3 >= 0.2:
             sleep(15)
             # print("Toxic")
             # myfile.write("\n" + content + '\t"{""toxic_content"":true}"')
@@ -339,7 +342,7 @@ def process_comment(elem):
             # we found something bad
             logger.info('REPORT FOR COMMENT: %s', flags)
             try:
-                # elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED COMMENT\n******************')
                 db.add_outcome_to_comment(comment_id, "Reported comment for: " + '|'.join(flags))
             except:
@@ -404,7 +407,7 @@ def process_post(elem):
         if len(flags) > 0:
             logger.info('REPORT FOR POST: %s', flags)
             try:
-                # elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                elem.create_report(reason='Mod bot: ' + ', '.join(flags))
                 logger.info('****************\nREPORTED POST\n******************')
                 db.add_outcome_to_post(post_id, "Reported Post for: " + '|'.join(flags))
             except:

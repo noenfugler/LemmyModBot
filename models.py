@@ -28,7 +28,7 @@ class BoW(nn.Module):
         if self.num_neurons2 > 0:
             x = nn.ReLU()(self.hidden2(x))
             x = self.dropout2(x)
-        x = self.out(x)
+        x = nn.Sigmoid()(self.out(x))
         return x
 
 

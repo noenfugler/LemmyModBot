@@ -240,7 +240,7 @@ def assess_content_toxicity_bow(content):
         print(f'{preds}', (1-torch.argmax(preds)).item())
         # is_toxic = input("[T]oxic, [S]kip, [N]ot toxic : ")
         # is_toxic = CTkMessagebox(title="Toxic?", message=content + str(preds.item()),
-        #                     icon="warning", option_1="Toxic", option_2="Skip", option_3="Not toxic")
+        #                      icon="warning", option_1="Toxic", option_2="Skip", option_3="Not toxic")
         # with open("data/train.tsv", "a") as myfile:
         if preds[0].item() < 0.2 and preds[1].item() < 0.2:
             print("Low values^")

@@ -24,7 +24,7 @@ from pylemmy.models.comment import Comment
 import credentials
 from models import BoW
 from build_model import build_bow_model
-from matrix_client import send_message_to_matrix
+from matrix import send_message_to_matrix
 # Rebuild the model using the latest data from train.tsv
 build_bow_model()
 
@@ -49,9 +49,15 @@ def messagebox(title, body):
         body = body.replace('"', '')
         body = body.replace("'", '')
 
-        # Create messagebox
-        return os.system(
-            "osascript -e 'Tell application " + '"System Events" to display dialog "' + body + '" with title "' + title + '"' + "'")
+    send_message_to_matrix(m_server=credentials.matrix_server,
+                           m_account=credentials.matrix_account,
+                           m_password=credentials.matrix_password,
+                           m_room_id=credentials.matrix_room_id,
+                           m_content='Mod bot (with L plates) : ' + title + '\n' + body)
+
+    # Create messagebox
+        # return os.system(
+        #     "osascript -e 'Tell application " + '"System Events" to display dialog "' + body + '" with title "' + title + '"' + "'")
         # osascript -e 'Tell application "System Events" to display dialog "Some Funky Message" with title "Hello Matey"'
 
 
@@ -246,12 +252,13 @@ def assess_content_toxicity_bow(content):
         print(f'{preds}', (1-torch.argmax(preds)).item())
         if preds[0].item() < 0.2 and preds[1].item() < 0.2:
             print("Low values^")
-            messagebox(title = "Low Values", body = content + '\n' + str(preds))
+            messagebox(title = "Low Values^", body = content + '\n' + str(preds))
         if abs(preds[0].item() - preds[1].item()) < credentials.uncertainty_allowance :
             print("Close values^")
-            messagebox(title = "Close Values", body = content + '\n' + str(preds))
+            messagebox(title = "Close Values^", body = content + '\n' + str(preds))
         if preds2 == 1 and preds3 >= credentials.uncertainty_allowance:
             sleep(15)
+            print("Toxic^")
             messagebox(title = "Toxic Content", body = content + '\n' + str(preds))
             local_flags.append('toxic')
 
@@ -292,7 +299,7 @@ def process_comment(elem):
         # Take action.
         db.add_to_comments_list(comment_id, results)
         pprint(vars(elem))
-        if len(flags) >= 0:
+        if len(flags) > 0:
             # we found something bad
             logger.info('REPORT FOR COMMENT: %s', flags)
             try:
@@ -304,11 +311,11 @@ def process_comment(elem):
                 logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                 db.add_outcome_to_comment(comment_id, "Failed to report comment for: " + '|'.join(
                     flags) + " due to exception :" + traceback.format_exc())
-            asyncio.run(send_message_to_matrix(server=credentials.matrix_server,
-                                               account=credentials.matrix_account,
-                                               password=credentials.matrix_password,
-                                               room_id=credentials.matrix_room_id,
-                                               content='Mod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.comment_view)))
+            send_message_to_matrix(m_server=credentials.matrix_server,
+                                               m_account=credentials.matrix_account,
+                                               m_password=credentials.matrix_password,
+                                               m_room_id=credentials.matrix_room_id,
+                                               m_content='Mod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.comment_view.comment))
         else:
             db.add_outcome_to_comment(comment_id, "No report")
         sleep(5)
@@ -377,11 +384,11 @@ def process_post(elem):
                 logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                 db.add_outcome_to_comment(post_id, "Failed to report post for: " + '|'.join(
                     flags) + " due to exception :" + traceback.format_exc())
-            send_message_to_matrix(server=credentials.matrix_server,
-                                               account=credentials.matrix_account,
-                                               password=credentials.matrix_password,
-                                               room_id=credentials.matrix_room_id,
-                                               content='Mod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.post_view))
+            send_message_to_matrix(m_server=credentials.matrix_server,
+                                   m_account=credentials.matrix_account,
+                                   m_password=credentials.matrix_password,
+                                   m_room_id=credentials.matrix_room_id,
+                                   m_content='Mod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.post_view))
         else:
             db.add_outcome_to_post(post_id, "No report")
         sleep(5)

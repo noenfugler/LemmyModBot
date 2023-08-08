@@ -16,6 +16,7 @@ import numpy as np
 import torchtext
 import pandas as pd
 from pprint import pprint
+import asyncio
 
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
@@ -23,7 +24,7 @@ from pylemmy.models.comment import Comment
 import credentials
 from models import BoW
 from build_model import build_bow_model
-
+from matrix_client import send_message_to_matrix
 # Rebuild the model using the latest data from train.tsv
 build_bow_model()
 
@@ -291,7 +292,7 @@ def process_comment(elem):
         # Take action.
         db.add_to_comments_list(comment_id, results)
         pprint(vars(elem))
-        if len(flags) > 0:
+        if len(flags) >= 0:
             # we found something bad
             logger.info('REPORT FOR COMMENT: %s', flags)
             try:
@@ -303,6 +304,11 @@ def process_comment(elem):
                 logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                 db.add_outcome_to_comment(comment_id, "Failed to report comment for: " + '|'.join(
                     flags) + " due to exception :" + traceback.format_exc())
+            asyncio.run(send_message_to_matrix(server=credentials.matrix_server,
+                                               account=credentials.matrix_account,
+                                               password=credentials.matrix_password,
+                                               room_id=credentials.matrix_room_id,
+                                               content='Mod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.comment_view)))
         else:
             db.add_outcome_to_comment(comment_id, "No report")
         sleep(5)
@@ -371,6 +377,11 @@ def process_post(elem):
                 logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                 db.add_outcome_to_comment(post_id, "Failed to report post for: " + '|'.join(
                     flags) + " due to exception :" + traceback.format_exc())
+            asyncio.run(send_message_to_matrix(server=credentials.matrix_server,
+                                               account=credentials.matrix_account,
+                                               password=credentials.matrix_password,
+                                               room_id=credentials.matrix_room_id,
+                                               content='Mod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.post_view)))
         else:
             db.add_outcome_to_post(post_id, "No report")
         sleep(5)

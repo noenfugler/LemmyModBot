@@ -15,6 +15,7 @@ import torch
 import numpy as np
 import torchtext
 import pandas as pd
+from pprint import pprint
 
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
@@ -23,6 +24,7 @@ import credentials
 from models import BoW
 from build_model import build_bow_model
 
+# Rebuild the model using the latest data from train.tsv
 build_bow_model()
 
 logger = logging.getLogger()
@@ -34,6 +36,23 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('[%(asctime)s %(levelname)s] %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+def messagebox(title, body):
+    """ A simple messagebox call to notify the user"""
+    if sys.platform == "darwin":
+    # Only works on OS X at this time
+
+        # Remove any quotes that mess up the messagebox call
+        title = title.replace('"', '')
+        title = title.replace("'", '')
+        body = body.replace('"', '')
+        body = body.replace("'", '')
+
+        # Create messagebox
+        return os.system(
+            "osascript -e 'Tell application " + '"System Events" to display dialog "' + body + '" with title "' + title + '"' + "'")
+        # osascript -e 'Tell application "System Events" to display dialog "Some Funky Message" with title "Hello Matey"'
+
 
 def clean_content(content):
     """Tidy up content to remove unwanted characters before processing text"""
@@ -226,11 +245,15 @@ def assess_content_toxicity_bow(content):
         print(f'{preds}', (1-torch.argmax(preds)).item())
         if preds[0].item() < 0.2 and preds[1].item() < 0.2:
             print("Low values^")
-        if abs(preds[0].item() - preds[1].item()) < 0.2 :
+            messagebox(title = "Low Values", body = content + '\n' + str(preds))
+        if abs(preds[0].item() - preds[1].item()) < credentials.uncertainty_allowance :
             print("Close values^")
-        if preds2 == 1 and preds3 >= 0.2:
+            messagebox(title = "Close Values", body = content + '\n' + str(preds))
+        if preds2 == 1 and preds3 >= credentials.uncertainty_allowance:
             sleep(15)
+            messagebox(title = "Toxic Content", body = content + '\n' + str(preds))
             local_flags.append('toxic')
+
         return {"toxicity":preds[0].item(),
                 "non_toxicity": preds[1].item(),
                 }, local_flags
@@ -267,12 +290,13 @@ def process_comment(elem):
 
         # Take action.
         db.add_to_comments_list(comment_id, results)
+        pprint(vars(elem))
         if len(flags) > 0:
             # we found something bad
             logger.info('REPORT FOR COMMENT: %s', flags)
             try:
                 if not credentials.debug_mode:
-                    elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                    elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                 logger.info('****************\nREPORTED COMMENT\n******************')
                 db.add_outcome_to_comment(comment_id, "Reported comment for: " + '|'.join(flags))
             except:
@@ -340,7 +364,7 @@ def process_post(elem):
             logger.info('REPORT FOR POST: %s', flags)
             try:
                 if not credentials.debug_mode:
-                    elem.create_report(reason='Mod bot: ' + ', '.join(flags))
+                    elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                 logger.info('****************\nREPORTED POST\n******************')
                 db.add_outcome_to_post(post_id, "Reported Post for: " + '|'.join(flags))
             except:

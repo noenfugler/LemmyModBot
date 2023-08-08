@@ -38,18 +38,20 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 def messagebox(title, body):
-    """ A simple Macos messagebox call to notify the user"""
+    """ A simple messagebox call to notify the user"""
+    if sys.platform == "darwin":
+    # Only works on OS X at this time
 
-    # Remove any quotes that mess up the messagebox call
-    title = title.replace('"', '')
-    title = title.replace("'", '')
-    body = body.replace('"', '')
-    body = body.replace("'", '')
+        # Remove any quotes that mess up the messagebox call
+        title = title.replace('"', '')
+        title = title.replace("'", '')
+        body = body.replace('"', '')
+        body = body.replace("'", '')
 
-    # Create messagebox
-    return os.system(
-        "osascript -e 'Tell application " + '"System Events" to display dialog "' + body + '" with title "' + title + '"' + "'")
-    # osascript -e 'Tell application "System Events" to display dialog "Some Funky Message" with title "Hello Matey"'
+        # Create messagebox
+        return os.system(
+            "osascript -e 'Tell application " + '"System Events" to display dialog "' + body + '" with title "' + title + '"' + "'")
+        # osascript -e 'Tell application "System Events" to display dialog "Some Funky Message" with title "Hello Matey"'
 
 
 def clean_content(content):

@@ -1,7 +1,6 @@
 import asyncio
 
 from nio import AsyncClient, MatrixRoom, RoomMessageText
-import credentials
 
 async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
     """ Not currently used"""

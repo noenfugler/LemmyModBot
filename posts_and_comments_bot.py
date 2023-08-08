@@ -377,11 +377,11 @@ def process_post(elem):
                 logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                 db.add_outcome_to_comment(post_id, "Failed to report post for: " + '|'.join(
                     flags) + " due to exception :" + traceback.format_exc())
-            asyncio.run(send_message_to_matrix(server=credentials.matrix_server,
+            send_message_to_matrix(server=credentials.matrix_server,
                                                account=credentials.matrix_account,
                                                password=credentials.matrix_password,
                                                room_id=credentials.matrix_room_id,
-                                               content='Mod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.post_view)))
+                                               content='Mod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.post_view))
         else:
             db.add_outcome_to_post(post_id, "No report")
         sleep(5)

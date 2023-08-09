@@ -13,5 +13,6 @@ The neural network with the supplied training dataset is currently achieving acc
   from lemmybot import LemmyBot
 
   lemmy_world = LemmyBot(rebuild_model=True)
+  
   lemmy_world.run()
  

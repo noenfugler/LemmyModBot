@@ -10,8 +10,8 @@ The neural network with the supplied training dataset is currently achieving acc
 
 ## Example Usage
 
- from lemmybot import LemmyBot
+  from lemmybot import LemmyBot
 
- lemmy_world = LemmyBot(rebuild_model=True)
- lemmy_world.run()
+  lemmy_world = LemmyBot(rebuild_model=True)
+  lemmy_world.run()
  

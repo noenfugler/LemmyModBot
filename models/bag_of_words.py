@@ -1,15 +1,50 @@
 import torch
+import torch.nn as nn
 import pandas as pd
 import torchtext
 from sklearn.model_selection import train_test_split
 import numpy as np
-import torch.nn as nn
-from models import BoW
-from datetime import datetime
-# from torcheval.metrics import BinaryAccuracy
+
+torch.set_default_dtype(torch.float64)
+
+class BagOfWords(nn.Module):
+    def __init__(self, vocab_size):
+        super().__init__()
+        # the following two assignment was adjusted during tuning
+        self.vocab_size = vocab_size
+        self.dropout_rate = 0.1
+        self.num_neurons1 = 512
+        self.num_neurons2 = 64
+        self.hidden1 = nn.Linear(vocab_size, self.num_neurons1)
+        self.dropout1 = nn.Dropout(self.dropout_rate)
+        if self.num_neurons2 > 0:
+            self.hidden2 = nn.Linear(self.num_neurons1, self.num_neurons2)
+            self.dropout2 = nn.Dropout(self.dropout_rate)
+            self.out = nn.Linear(self.num_neurons2, 2)
+        else:
+            self.out = nn.Linear(self.num_neurons1, 2)
+
+    def forward(self, x):
+        if x.dtype != torch.float64:
+            x = x.double()
+        x = nn.ReLU()(self.hidden1(x))
+        # x = self.dropout1(x)
+        if self.num_neurons2 > 0:
+            x = nn.ReLU()(self.hidden2(x))
+            x = self.dropout2(x)
+        x = nn.Sigmoid()(self.out(x))
+        return x
+
+
+    def get_config(self):
+        if self.num_neurons2 == 0:
+            return str(self.num_neurons1)
+        else:
+            return str(self.num_neurons1) + "-" + str(self.num_neurons2)
 
 
 def build_bow_model():
+
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     from torch.utils.data import Dataset
@@ -123,7 +158,7 @@ def build_bow_model():
     # test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=True)
     # train_dataloader
 
-    model = BoW(vocab_size=len(vocab)).to(device)
+    model = BagOfWords(vocab_size=len(vocab)).to(device)
     model.double()
 
     # Define the optimiser and tell it what parameters to update, as well as the loss function
@@ -253,17 +288,17 @@ def build_bow_model():
             epoch+1, train_loss, train_accuracy, valid_loss, valid_accuracy))
 
 
-    import matplotlib.pyplot as plt
-    fig, ax1 = plt.subplots(1, 1, figsize=(9.75, 6.5), sharex=True)
-    fig.suptitle('Epochs: '+str(num_epochs)+"  LR: {:6.4f}".format(learning_rate)+"  Config: "+model.get_config())
-    ax1.plot(train_losses, color='g', linestyle='dashed', label='train loss')
-    ax1.plot(valid_losses, color='r', linestyle='dashed', label='valid loss')
-    ax1.set_ylabel("Loss")
-    ax1.set_title("Last training loss: {:10.3f}".format(train_loss) + "     Last validation loss: {:10.3f}".format(valid_loss) + "\n" + "Last training accuracy: {:10.3f}".format(train_accuracy) + "     Last validation accuracy: {:10.3f}".format(valid_accuracy))
-    ax1.plot(train_accuracies, color='m',  linewidth=1.5, label='train accuracy')
-    ax1.plot(valid_accuracies, color='b',  linewidth=1.5, label='valid accuracy')
-    ax1.set_ylim([0.,2.])
-    ax1.legend()
+    # import matplotlib.pyplot as plt
+    # fig, ax1 = plt.subplots(1, 1, figsize=(9.75, 6.5), sharex=True)
+    # fig.suptitle('Epochs: '+str(num_epochs)+"  LR: {:6.4f}".format(learning_rate)+"  Config: "+model.get_config())
+    # ax1.plot(train_losses, color='g', linestyle='dashed', label='train loss')
+    # ax1.plot(valid_losses, color='r', linestyle='dashed', label='valid loss')
+    # ax1.set_ylabel("Loss")
+    # ax1.set_title("Last training loss: {:10.3f}".format(train_loss) + "     Last validation loss: {:10.3f}".format(valid_loss) + "\n" + "Last training accuracy: {:10.3f}".format(train_accuracy) + "     Last validation accuracy: {:10.3f}".format(valid_accuracy))
+    # ax1.plot(train_accuracies, color='m',  linewidth=1.5, label='train accuracy')
+    # ax1.plot(valid_accuracies, color='b',  linewidth=1.5, label='valid accuracy')
+    # ax1.set_ylim([0.,2.])
+    # ax1.legend()
     # plt.show()
     # plt.savefig(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")+".png")
 

@@ -13,7 +13,6 @@ debug_mode = False  # Setting this value to true will mean that the bot will not
 # the bot requires before reporting content.  0 = balance of probabilities.  1.0 = never report.
 uncertainty_allowance = 0.2
 
-
 # Matrix login details for the bot to communicate with a Matrix room
 """    
     server : string - The name of the server.  e.g. "https://matrix.example.org"

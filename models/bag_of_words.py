@@ -288,17 +288,17 @@ def build_bow_model():
             epoch+1, train_loss, train_accuracy, valid_loss, valid_accuracy))
 
 
-    import matplotlib.pyplot as plt
-    fig, ax1 = plt.subplots(1, 1, figsize=(9.75, 6.5), sharex=True)
-    fig.suptitle('Epochs: '+str(num_epochs)+"  LR: {:6.4f}".format(learning_rate)+"  Config: "+model.get_config())
-    ax1.plot(train_losses, color='g', linestyle='dashed', label='train loss')
-    ax1.plot(valid_losses, color='r', linestyle='dashed', label='valid loss')
-    ax1.set_ylabel("Loss")
-    ax1.set_title("Last training loss: {:10.3f}".format(train_loss) + "     Last validation loss: {:10.3f}".format(valid_loss) + "\n" + "Last training accuracy: {:10.3f}".format(train_accuracy) + "     Last validation accuracy: {:10.3f}".format(valid_accuracy))
-    ax1.plot(train_accuracies, color='m',  linewidth=1.5, label='train accuracy')
-    ax1.plot(valid_accuracies, color='b',  linewidth=1.5, label='valid accuracy')
-    ax1.set_ylim([0.,2.])
-    ax1.legend()
+    # import matplotlib.pyplot as plt
+    # fig, ax1 = plt.subplots(1, 1, figsize=(9.75, 6.5), sharex=True)
+    # fig.suptitle('Epochs: '+str(num_epochs)+"  LR: {:6.4f}".format(learning_rate)+"  Config: "+model.get_config())
+    # ax1.plot(train_losses, color='g', linestyle='dashed', label='train loss')
+    # ax1.plot(valid_losses, color='r', linestyle='dashed', label='valid loss')
+    # ax1.set_ylabel("Loss")
+    # ax1.set_title("Last training loss: {:10.3f}".format(train_loss) + "     Last validation loss: {:10.3f}".format(valid_loss) + "\n" + "Last training accuracy: {:10.3f}".format(train_accuracy) + "     Last validation accuracy: {:10.3f}".format(valid_accuracy))
+    # ax1.plot(train_accuracies, color='m',  linewidth=1.5, label='train accuracy')
+    # ax1.plot(valid_accuracies, color='b',  linewidth=1.5, label='valid accuracy')
+    # ax1.set_ylim([0.,2.])
+    # ax1.legend()
     # plt.show()
     # plt.savefig(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")+".png")
 

@@ -1,5 +1,4 @@
-""" This file creates and manages to bot.
-TODO:  Move main content to a separate library"""
+""" This file creates and manages a bot to help Moderate one or more Lemmy communities."""
 
 import traceback
 from time import sleep
@@ -11,15 +10,17 @@ import logging
 import sys
 import re
 import datetime as dt
+from pprint import pprint
 import torch
 import numpy as np
 import torchtext
 import pandas as pd
-from pprint import pprint
 
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
 from pylemmy.models.comment import Comment
+from matrix_client.client import MatrixClient
+
 import credentials
 from models.bag_of_words import BagOfWords, build_bow_model
 
@@ -180,6 +181,8 @@ class ReconnectionDelayManager:
         self.count = 1
 
 class LemmyBot:
+    """ LemmyBot is a bot that checks Lemmy posts and comments for toxicity, as well as
+    performing regexp matching, user watchlist monitoring amongst other things."""
     def __init__(self, train_filename="data/train.tsv", rebuild_model = True):
 
         self.logger = logging.getLogger()
@@ -230,9 +233,9 @@ class LemmyBot:
             password=credentials.password,
             user_agent="custom user agent (by " + credentials.alt_username + ")",
         )
-        DB_DIRECTORY_NAME = 'history'
-        DB_FILE_NAME = 'history.db'
-        self.db = Database(DB_DIRECTORY_NAME, DB_FILE_NAME)
+        db_directory_name = 'history'
+        db_file_name = 'history.db'
+        self.history_db = Database(db_directory_name, db_file_name)
 
         self.vocab_size = len(self.vocab)
         self.model = BagOfWords(vocab_size=self.vocab_size)
@@ -245,6 +248,7 @@ class LemmyBot:
 
 
     def build_model(self):
+        """ Call to the function to recreate the  model from the training data"""
         build_bow_model()
 
     def messagebox(self, title, body):
@@ -260,7 +264,8 @@ class LemmyBot:
 
             # Create messagebox
             return os.system(
-                "osascript -e 'Tell application " + '"System Events" to display dialog "' + body + '" with title "' + title + '"' + "'")
+                "osascript -e 'Tell application " + '"System Events" to display dialog "'
+                + body + '" with title "' + title + '"' + "'")
             # osascript -e 'Tell application "System Events" to display dialog "Some Funky Message" with title "Hello Matey"'
 
     def send_message_to_matrix(self, m_server, m_account, m_password, m_room_id, m_content):
@@ -283,8 +288,8 @@ class LemmyBot:
         # Get a room instance
         room = client.join_room(m_room_id)
 
-        # Send a message synchronously
-        response = room.send_text(text=m_content)
+        # Send a message synchronously.  Returns a result if needed later
+        room.send_text(text=m_content)
 
         # Wait for the response before continuing
         # response.wait_for_response()
@@ -365,7 +370,7 @@ class LemmyBot:
         if comment_id == 1313063:
             pass
             # Opportunity for some debugging here
-        if not self.db.in_comments_list(comment_id):
+        if not self.history_db.in_comments_list(comment_id):
             flags = []
             content = elem.comment_view.comment.content
             actor_id = elem.comment_view.creator.actor_id
@@ -373,7 +378,7 @@ class LemmyBot:
             # Detoxify
 
             # results = assess_content_toxicity(content)
-            results, returned_flags = self.assess_content_toxicity_bow(content)
+            comment_results, returned_flags = self.assess_content_toxicity_bow(content)
             flags = flags + returned_flags
             # Actor watch list
             if actor_id in credentials.user_watch_list:
@@ -383,7 +388,7 @@ class LemmyBot:
             # Nothing here yet
 
             # Take action.
-            self.db.add_to_comments_list(comment_id, results)
+            self.history_db.add_to_comments_list(comment_id, comment_results)
             pprint(vars(elem))
             if len(flags) > 0:
                 # we found something bad
@@ -392,18 +397,23 @@ class LemmyBot:
                     if not credentials.debug_mode:
                         elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                     self.logger.info('****************\nREPORTED COMMENT\n******************')
-                    self.db.add_outcome_to_comment(comment_id, "Reported comment for: " + '|'.join(flags))
+                    self.history_db.add_outcome_to_comment(comment_id, "Reported comment for: "
+                                                           + '|'.join(flags))
                 except:
                     self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
-                    self.db.add_outcome_to_comment(comment_id, "Failed to report comment for: " + '|'.join(
-                        flags) + " due to exception :" + traceback.format_exc())
+                    self.history_db.add_outcome_to_comment(comment_id, "Failed to report comment for: "
+                                                           + '|'.join(flags) + " due to exception :"
+                                                           + traceback.format_exc())
+                matrix_message = '\n\nMod bot (with L plates) : ' + ', '.join(flags)
+                matrix_message = matrix_message + '\n' + str(comment_results)
+                matrix_message = matrix_message + '\n' + str(elem.comment_view.comment)
                 self.send_message_to_matrix(m_server=credentials.matrix_server,
                                                    m_account=credentials.matrix_account,
                                                    m_password=credentials.matrix_password,
                                                    m_room_id=credentials.matrix_room_id,
-                                                   m_content='\n\nMod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.comment_view.comment))
+                                                   m_content= matrix_message)
             else:
-                self.db.add_outcome_to_comment(comment_id, "No report")
+                self.history_db.add_outcome_to_comment(comment_id, "No report")
             sleep(5)
         else:
             self.logger.info('Comment Already Assessed')
@@ -415,7 +425,7 @@ class LemmyBot:
 
         post_id = elem.post_view.post.id
         self.logger.info('POST %s: %s', post_id, elem.post_view.post.name)
-        if not self.db.in_posts_list(post_id):
+        if not self.history_db.in_posts_list(post_id):
             flags = []
             name = elem.post_view.post.name
             body = elem.post_view.post.body
@@ -456,25 +466,31 @@ class LemmyBot:
                     print('\n\n*******REGEXP MATCH*******\n')
 
             # Take action
-            self.db.add_to_posts_list(post_id, detox_name_results, detox_body_results)
+            self.history_db.add_to_posts_list(post_id, detox_name_results, detox_body_results)
             if len(flags) > 0:
                 self.logger.info('REPORT FOR POST: %s', flags)
                 try:
                     if not credentials.debug_mode:
                         elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                     self.logger.info('****************\nREPORTED POST\n******************')
-                    self.db.add_outcome_to_post(post_id, "Reported Post for: " + '|'.join(flags))
+                    self.history_db.add_outcome_to_post(post_id, "Reported Post for: "
+                                                        + '|'.join(flags))
                 except:
                     self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
-                    self.db.add_outcome_to_comment(post_id, "Failed to report post for: " + '|'.join(
-                        flags) + " due to exception :" + traceback.format_exc())
+                    self.history_db.add_outcome_to_comment(post_id, "Failed to report post for: "
+                                                           + '|'.join(flags) + " due to exception :"
+                                                           + traceback.format_exc())
+                matrix_message = '\n\nMod bot (with L plates) : ' + ', '.join(flags)
+                matrix_message = matrix_message + '\n' + str(detox_name_results)
+                matrix_message = matrix_message + '\n' + str(detox_body_results)
+                matrix_message = matrix_message + '\n' + str(elem.post_view.post)
                 self.send_message_to_matrix(m_server=credentials.matrix_server,
-                                       m_account=credentials.matrix_account,
-                                       m_password=credentials.matrix_password,
-                                       m_room_id=credentials.matrix_room_id,
-                                       m_content='\n\nMod bot (with L plates) : ' + ', '.join(flags) + '\n' + str(elem.post_view.post))
+                                                   m_account=credentials.matrix_account,
+                                                   m_password=credentials.matrix_password,
+                                                   m_room_id=credentials.matrix_room_id,
+                                                   m_content= matrix_message)
             else:
-                self.db.add_outcome_to_post(post_id, "No report")
+                self.history_db.add_outcome_to_post(post_id, "No report")
             sleep(5)
 
         else:
@@ -490,9 +506,10 @@ class LemmyBot:
         elif isinstance(elem, Post):
             # It's a post
             self.process_post(elem)
-        sleep(5)
+        # sleep(5)
 
     def run(self):
+        """This is the main run loop for the bot.  It should be called after initiation of bot"""
         while True:
             try:
                 multi_stream = self.lemmy.multi_communities_stream(credentials.communities)

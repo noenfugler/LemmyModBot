@@ -6,7 +6,7 @@ Local Dataset is used for training.
 This bot is a work in progress and is expected to expand and grow.
 
 ## Nerual Network accuracy
-The neural network with the supplied training dataset is currently achieving accuracies of around 75-80% in detecting toxic content.
+The neural network with the supplied training dataset is currently achieving accuracies of around 75-80% in detecting toxic content.  Ongoing addition of ambiguous or misclassified data to the training set is hoped to improve this.
 
 ## Example Usage
 

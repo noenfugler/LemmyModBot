@@ -7,6 +7,7 @@ import numpy as np
 
 torch.set_default_dtype(torch.float64)
 
+
 class BagOfWords(nn.Module):
     def __init__(self, vocab_size):
         super().__init__()
@@ -35,7 +36,6 @@ class BagOfWords(nn.Module):
         x = nn.Sigmoid()(self.out(x))
         return x
 
-
     def get_config(self):
         if self.num_neurons2 == 0:
             return str(self.num_neurons1)
@@ -44,11 +44,11 @@ class BagOfWords(nn.Module):
 
 
 def build_bow_model():
-
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     from torch.utils.data import Dataset
     torch.set_default_tensor_type(torch.DoubleTensor)
+
     class MyDataset(Dataset):
 
         def __init__(self, df):
@@ -71,15 +71,14 @@ def build_bow_model():
         def __getitem__(self, idx):
             return self.x[idx], self.y[idx]
 
+    # train_dataset_dict = load_dataset('text', data_files='training/train.tsv')
 
-    # train_dataset_dict = load_dataset('text', data_files='data/train.tsv')
-
-    all_data = pd.read_csv("data/train.tsv", sep='\t', lineterminator='\n')
+    all_data = pd.read_csv("training/train.tsv", sep='\t', lineterminator='\n')
     # train_data
 
     tokenizer = torchtext.data.utils.get_tokenizer("basic_english")
     # max_length = 2400
-    all_data['tokens'] = all_data.apply(lambda row : tokenizer(row['comment']), axis = 1)
+    all_data['tokens'] = all_data.apply(lambda row: tokenizer(row['comment']), axis=1)
 
     # build a vocabulary
 
@@ -87,6 +86,7 @@ def build_bow_model():
                                                       min_freq=5,
                                                       specials=['<unk>', '<pad>'])
     vocab.set_default_index(vocab['<unk>'])
+
     # print(len(vocab))
 
     def numericalize_data(example, vocab):
@@ -96,9 +96,8 @@ def build_bow_model():
     # train_data = train_data.map(numericalize_data, fn_kwargs={'vocab': vocab})
     # valid_data = valid_data.map(numericalize_data, fn_kwargs={'vocab': vocab})
 
+    all_data['ids'] = all_data.apply(lambda row: numericalize_data(row, vocab), axis=1)
 
-
-    all_data['ids'] = all_data.apply(lambda row : numericalize_data(row, vocab), axis = 1)
     # print(all_data)
 
     def multi_hot_data(example, num_classes):
@@ -109,7 +108,7 @@ def build_bow_model():
 
     # train_data = train_data.map(multi_hot_data, fn_kwargs={'num_classes': len(vocab)})
 
-    all_data['multi_hot'] = all_data.apply(lambda row : multi_hot_data(row, len(vocab)), axis = 1)
+    all_data['multi_hot'] = all_data.apply(lambda row: multi_hot_data(row, len(vocab)), axis=1)
     # print(all_data)
 
     # Extract four labels into their own columns
@@ -128,14 +127,13 @@ def build_bow_model():
 
     # split dataset , only keeping `multi-hot` and `label columns`:
 
-    all_data = all_data[['multi_hot', 'toxic_content', 'not_toxic_content']] #, 'not_toxic', 'unclear', 'other_tick']]
+    all_data = all_data[['multi_hot', 'toxic_content', 'not_toxic_content']]  # , 'not_toxic', 'unclear', 'other_tick']]
     # all_data
     train_data, valid_data = train_test_split(all_data, test_size=0.1, random_state=2)
     # valid_data, test_data = train_test_split(non_train_data, test_size=0.333, random_state=0)
     # train_data.reset_index(drop=True, inplace=True)
     # valid_data.reset_index(drop=True, inplace=True)
     # test_data.reset_index(drop=True, inplace=True)
-
 
     train_dataset = MyDataset(train_data)
     valid_dataset = MyDataset(valid_data)
@@ -168,14 +166,14 @@ def build_bow_model():
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = nn.CrossEntropyLoss().to(device)
+
     # loss_fn = nn.BCELoss().to(device)
     # loss_fn = nn.MSELoss().to(device)
     # metric = BinaryAccuracy(threshold=0.9)
     # Define function `train`, which trains our model for one epoch and returns the mean training loss.
 
-
     def train(model, dataloader, loss_fn, optimizer, device):
-    # def train(model, X, y, loss_fn, optimizer, device):
+        # def train(model, X, y, loss_fn, optimizer, device):
 
         model.train()
         losses, accuracies = [], []
@@ -252,7 +250,6 @@ def build_bow_model():
             # metric.update(preds, reasons)
             # accuracy = metric.compute()
 
-
         # Calculate confusion matrix
         # confusion_mat = confusion_matrix(all_reasons, all_preds)
 
@@ -266,8 +263,8 @@ def build_bow_model():
     for epoch in range(num_epochs):
         # Train
         train_loss, train_accuracy = train(model, train_dataloader, loss_fn, optimizer, device)
-    #     # Evaluate
-    #     valid_loss, valid_accuracy, confusion_mat = evaluate(model, valid_dataloader, loss_fn, device)
+        #     # Evaluate
+        #     valid_loss, valid_accuracy, confusion_mat = evaluate(model, valid_dataloader, loss_fn, device)
         valid_loss, valid_accuracy = evaluate(model, valid_dataloader, loss_fn, device)
         ##
         # The following  line was commented until the final model was trained and the results with the test data were evaluated.
@@ -285,8 +282,7 @@ def build_bow_model():
         # test_losses.append(test_loss)
         # test_accuracies.append(test_accuracy)
         print("Epoch {}: train_loss={:.4f}, train_accuracy={:.4f}, valid_loss={:.4f}, valid_accuracy={:.4f}".format(
-            epoch+1, train_loss, train_accuracy, valid_loss, valid_accuracy))
-
+            epoch + 1, train_loss, train_accuracy, valid_loss, valid_accuracy))
 
     # import matplotlib.pyplot as plt
     # fig, ax1 = plt.subplots(1, 1, figsize=(9.75, 6.5), sharex=True)
@@ -302,4 +298,4 @@ def build_bow_model():
     # plt.show()
     # plt.savefig(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")+".png")
 
-    torch.save(model.state_dict(), "model.mdl")
+    torch.save(model.state_dict(), "data/model.mdl")

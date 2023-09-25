@@ -99,7 +99,7 @@ class Database:
         """ add a comment id to the list of previously checked comments in the database """
 
         conn = sqlite3.connect(self.db_location)
-        sql = f'''INSERT INTO comments(id, toxicity, non_toxicity) VALUES{comment_id, 
+        sql = f'''INSERT INTO comments(id, toxicity, non_toxicity) VALUES{comment_id,
         results['toxicity'], results['non_toxicity']};'''
         # try:
         conn.execute(sql)
@@ -132,20 +132,22 @@ class Database:
 
         conn = sqlite3.connect(self.db_location)
         sql = f"""INSERT INTO posts(id, name_toxicity, name_non_toxicity, 
-        body_toxicity, body_non_toxicity) VALUES{post_id, 
-        detox_name_results['toxicity'], detox_name_results['non_toxicity'], 
-        detox_body_results['toxicity'], detox_body_results['non_toxicity'], };"""
+        body_toxicity, body_non_toxicity) VALUES{post_id,
+        detox_name_results['toxicity'], detox_name_results['non_toxicity'],
+        detox_body_results['toxicity'], detox_body_results['non_toxicity'],};"""
 
         conn.execute(sql)
         conn.commit()
         conn.close()
+
 
 class ReconnectionDelayManager:
     """ This class creates an object to provide escalating wait times when the server times out.
     The first wait should be 30sec, the second should be 60sec, etc up until a maximum of 5min
     between attempts.  If there are no calls to this object within the reset time period (6 mins),
     it resets to the start again."""
-    def __init__(self, logger, wait_increment = 30, max_count = 10, reset_time = 360):
+
+    def __init__(self, logger, wait_increment=30, max_count=10, reset_time=360):
         self.count = 1
         self.last_time = dt.datetime.now()
 
@@ -165,12 +167,12 @@ class ReconnectionDelayManager:
 
         if (dt.datetime.now() - self.last_time).total_seconds() > self.reset_time:
             self.count = 1
-        wait_time = self.count*self.wait_increment
+        wait_time = self.count * self.wait_increment
         self.logger.error(
             f"""Error in connection, stream or process_content.  
             Waiting {wait_time} seconds and trying again"""
         )
-        sleep(self.count*self.wait_increment)
+        sleep(self.count * self.wait_increment)
         self.count += 1
         if self.count > self.max_count:
             self.count = self.max_count
@@ -180,10 +182,12 @@ class ReconnectionDelayManager:
         """ Reset the manager"""
         self.count = 1
 
+
 class LemmyBot:
     """ LemmyBot is a bot that checks Lemmy posts and comments for toxicity, as well as
     performing regexp matching, user watchlist monitoring amongst other things."""
-    def __init__(self, train_filename="data/train.tsv", rebuild_model = True):
+
+    def __init__(self, train_filename="data/train.tsv", rebuild_model=True):
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
@@ -197,7 +201,6 @@ class LemmyBot:
 
         if rebuild_model:
             self.build_model()
-
 
         self.train_filename = train_filename
         # initialise deep neural network model
@@ -222,8 +225,8 @@ class LemmyBot:
 
         # build a vocabulary
         self.vocab = torchtext.vocab.build_vocab_from_iterator(self.all_data['tokens'],
-                                                          min_freq=5,
-                                                          specials=['<unk>', '<pad>'])
+                                                               min_freq=5,
+                                                               specials=['<unk>', '<pad>'])
         self.vocab.set_default_index(self.vocab['<unk>'])
         # return len(self.vocab)
 
@@ -231,7 +234,7 @@ class LemmyBot:
             lemmy_url=credentials.instance,
             username=credentials.username,
             password=credentials.password,
-            user_agent="custom user agent (by " + credentials.alt_username + ")",
+            user_agent="custom user agent (by " + credentials.owner_username + ")",
         )
         db_directory_name = 'history'
         db_file_name = 'history.db'
@@ -245,7 +248,6 @@ class LemmyBot:
         self.logger.info("Bot starting!")
 
         self.mydelay = ReconnectionDelayManager(logger=self.logger)
-
 
     def build_model(self):
         """ Call to the function to recreate the  model from the training data"""
@@ -305,8 +307,6 @@ class LemmyBot:
         content = content.replace("<br>", " ")
         return content
 
-
-
     def numericalize_data(self, example):
         """ Convert tokens into vocabulary index."""
         ids = [self.vocab[token] for token in example['tokens']]
@@ -336,30 +336,28 @@ class LemmyBot:
             # if inputs.dtype != torch.float64:
             #     inputs = inputs.float()
             preds = self.model(inputs)
-            preds2 = (1-torch.argmax(preds, dim=-1)).item()
+            preds2 = (1 - torch.argmax(preds, dim=-1)).item()
             preds3 = abs(preds[0].item() - preds[1].item())
 
-            print('\n\n'+content)
-            print(f'{preds}', (1-torch.argmax(preds)).item())
+            print('\n\n' + content)
+            print(f'{preds}', (1 - torch.argmax(preds)).item())
             if preds[0].item() < 0.2 and preds[1].item() < 0.2:
                 print("Low values^")
-                self.messagebox(title = "Low Values^", body = content + '\n' + str(preds))
-            if abs(preds[0].item() - preds[1].item()) < credentials.uncertainty_allowance :
+                self.messagebox(title="Low Values^", body=content + '\n' + str(preds))
+            if abs(preds[0].item() - preds[1].item()) < credentials.uncertainty_allowance:
                 print("Close values^")
-                self.messagebox(title = "Close Values^", body = content + '\n' + str(preds))
+                self.messagebox(title="Close Values^", body=content + '\n' + str(preds))
             if preds2 == 1 and preds3 >= credentials.uncertainty_allowance:
                 sleep(15)
                 print("Toxic^")
-                self.messagebox(title = "Toxic Content", body = content + '\n' + str(preds))
+                self.messagebox(title="Toxic Content", body=content + '\n' + str(preds))
                 local_flags.append('potentially toxic')
 
-            return {"toxicity":preds[0].item(),
+            return {"toxicity": preds[0].item(),
                     "non_toxicity": preds[1].item(),
                     }, local_flags
         else:
             return None, None
-
-
 
     def process_comment(self, elem):
         """Determine if the comment is new and if so run through detoxifier.  If toxic, then rrt.
@@ -408,16 +406,15 @@ class LemmyBot:
                 matrix_message = matrix_message + '\n' + str(comment_results)
                 matrix_message = matrix_message + '\n' + str(elem.comment_view.comment)
                 self.send_message_to_matrix(m_server=credentials.matrix_server,
-                                                   m_account=credentials.matrix_account,
-                                                   m_password=credentials.matrix_password,
-                                                   m_room_id=credentials.matrix_room_id,
-                                                   m_content= matrix_message)
+                                            m_account=credentials.matrix_account,
+                                            m_password=credentials.matrix_password,
+                                            m_room_id=credentials.matrix_room_id,
+                                            m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_comment(comment_id, "No report")
             sleep(5)
         else:
             self.logger.info('Comment Already Assessed')
-
 
     def process_post(self, elem):
         """Determine if the post is new and if so run through detoxifier.  If toxic, then report.
@@ -448,7 +445,7 @@ class LemmyBot:
             else:
                 flags = flags + local_flags_name
                 detox_body_results = {
-                    "toxicity":0.0,
+                    "toxicity": 0.0,
                     "non_toxicity": 0.0
                 }
             # Regexp
@@ -461,7 +458,7 @@ class LemmyBot:
                     regexp_body_result = False
                 if (not (regexp_name_result or regexp_body_result) \
                         and (community in credentials.question_communities)
-                    ):
+                ):
                     flags.append('No ? mark')
                     print('\n\n*******REGEXP MATCH*******\n')
 
@@ -485,17 +482,16 @@ class LemmyBot:
                 matrix_message = matrix_message + '\n' + str(detox_body_results)
                 matrix_message = matrix_message + '\n' + str(elem.post_view.post)
                 self.send_message_to_matrix(m_server=credentials.matrix_server,
-                                                   m_account=credentials.matrix_account,
-                                                   m_password=credentials.matrix_password,
-                                                   m_room_id=credentials.matrix_room_id,
-                                                   m_content= matrix_message)
+                                            m_account=credentials.matrix_account,
+                                            m_password=credentials.matrix_password,
+                                            m_room_id=credentials.matrix_room_id,
+                                            m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_post(post_id, "No report")
             sleep(5)
 
         else:
             self.logger.info('Post Already Assessed')
-
 
     def process_content(self, elem: Union[Post, Comment]):
         """ the main doing function, called when a new post or comment is received"""
@@ -509,6 +505,7 @@ class LemmyBot:
         # sleep(5)
 
     def run(self):
+        print("Test")
         """This is the main run loop for the bot.  It should be called after initiation of bot"""
         while True:
             try:

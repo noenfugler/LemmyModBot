@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pylemmy = "*"
+numpy = "*"
+pandas = "*"
+torch = "*"
+torchtext = "*"
+mypy-extensions = "*"
+matrix-client = "*"
+scikit-learn = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"

@@ -12,6 +12,7 @@ torchtext = "*"
 mypy-extensions = "*"
 matrix-client = "*"
 scikit-learn = "*"
+wheel = "*"
 
 [dev-packages]
 

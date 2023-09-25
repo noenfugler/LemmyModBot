@@ -28,7 +28,7 @@ class LemmyBot:
     """ LemmyBot is a bot that checks Lemmy posts and comments for toxicity, as well as
     performing regexp matching, user watchlist monitoring amongst other things."""
 
-    def __init__(self, train_filename="data/train.tsv", rebuild_model=True):
+    def __init__(self, train_filename="training/train.tsv", rebuild_model=True):
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
@@ -77,13 +77,13 @@ class LemmyBot:
             password=credentials.password,
             user_agent="custom user agent (by " + credentials.owner_username + ")",
         )
-        db_directory_name = 'history'
+        db_directory_name = 'data'
         db_file_name = 'history.db'
         self.history_db = Database(db_directory_name, db_file_name)
 
         self.vocab_size = len(self.vocab)
         self.model = BagOfWords(vocab_size=self.vocab_size)
-        self.model.load_state_dict(torch.load("model.mdl"))
+        self.model.load_state_dict(torch.load("data/model.mdl"))
         self.model.eval()
 
         self.logger.info("Bot starting!")

@@ -168,3 +168,5 @@ credentials.py
 .idea/
 
 model.mdl
+
+data/

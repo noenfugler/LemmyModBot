@@ -80,7 +80,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/BenMMcLean/LemmyModBot
+            ghcr.io/benmmclean/lemmymodbot
           tags: |
             type=schedule
             type=ref,event=branch
@@ -103,5 +103,5 @@ jobs:
           push: true
           tags: |
             ${{ steps.meta.outputs.tags }}
-            ghcr.io/BenMMcLean/LemmyModBot:latest
-            ghcr.io/BenMMcLean/LemmyModBot:${{ needs.version.outputs.version }}
+            ghcr.io/benmmclean/lemmymodbot:latest
+            ghcr.io/benmmclean/lemmymodbot:${{ needs.version.outputs.version }}

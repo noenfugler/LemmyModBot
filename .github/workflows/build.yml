@@ -103,5 +103,5 @@ jobs:
           push: true
           tags: |
             ${{ steps.meta.outputs.tags }}
-            ghcr.io/techlauncherlemmymod/backend:latest
-            ghcr.io/techlauncherlemmymod/backend:${{ needs.version.outputs.version }}
+            ghcr.io/BenMMcLean/LemmyModBot:latest
+            ghcr.io/BenMMcLean/LemmyModBot:${{ needs.version.outputs.version }}

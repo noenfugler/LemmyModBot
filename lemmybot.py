@@ -188,7 +188,7 @@ class LemmyBot:
                 elem.post_view.community.name,
                 elem.post_view.post.url,
                 elem.post_view.creator.actor_id,
-                ContentType.POST_BODY
+                ContentType.POST_LINK
             )
 
             flags, extras_title = self.run_processors(title_content, elem, flags, extras_title)

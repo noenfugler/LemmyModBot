@@ -19,7 +19,7 @@ from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
 import credentials
-from models.bag_of_words import BagOfWords, build_bow_model
+from bag_of_words import BagOfWords, build_bow_model
 from reconnection_manager import ReconnectionDelayManager
 from database import Database
 

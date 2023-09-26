@@ -195,7 +195,7 @@ class LemmyBot:
                         extras_body = {**extras_body, **result.extras}
 
             self.history_db.add_to_posts_list(post_id, extras_title, extras_body)
-
+            pprint(elem)
             if len(flags) > 0:
                 self.logger.info('REPORT FOR POST: %s', flags)
                 try:

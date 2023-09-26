@@ -106,12 +106,12 @@ class Database:
 
     def add_to_posts_list(self, post_id, detox_name_results, detox_body_results):
         """ add a post id to the list of previously checked posts """
-
         conn = sqlite3.connect(self.db_location)
         sql = f"""INSERT INTO posts(id, name_toxicity, name_non_toxicity, 
         body_toxicity, body_non_toxicity) VALUES{post_id,
         detox_name_results['toxicity'], detox_name_results['non_toxicity'],
-        detox_body_results['toxicity'], detox_body_results['non_toxicity'],};"""
+        detox_body_results['toxicity'] if 'toxicity' in detox_body_results else 0, 
+        detox_body_results['non_toxicity'] if 'non_toxicity' in detox_body_results else 1,};"""
 
         conn.execute(sql)
         conn.commit()

@@ -1,9 +1,10 @@
 from lemmybot import LemmyBot
-from processor import ToxicityProcessor, UserProcessor
+from processor import ToxicityProcessor, UserProcessor, BlacklistProcessor
 
 if __name__ == "__main__":
     bot = LemmyBot([
         ToxicityProcessor(),
-        UserProcessor()
+        UserProcessor(),
+        BlacklistProcessor()
     ])
     bot.run()

@@ -11,6 +11,7 @@ debug_mode = False  # Setting this value to true will mean that the bot will not
 
 train_filename = "training/train.tsv"
 rebuild_model = True
+blacklist = [x.strip() for x in os.getenv("WORD_BLACKLIST").split(',')] if os.getenv("WORD_BLACKLIST") is not None else []
 
 # The bot basically works on a balance of probabilities approach when deciding whether to report
 # content as toxic.  The following parameter increases the threshold of certainty that

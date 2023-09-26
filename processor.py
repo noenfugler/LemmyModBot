@@ -148,3 +148,16 @@ class UserProcessor(Processor):
         if content.actor_id in config.user_watch_list:
             return ContentResult(['user_watch_list'], None)
         return ContentResult([], None)
+
+
+class BlacklistProcessor(Processor):
+    tokenizer: Any
+
+    def setup(self) -> None:
+        self.tokenizer = torchtext.data.utils.get_tokenizer("basic_english")
+
+    def execute(self, content: Content) -> ContentResult:
+        tokens = self.tokenizer(content.content.lower())
+        if any(x in config.blacklist for x in tokens):
+            return ContentResult(['word_blacklist'], None)
+        return ContentResult([], None)

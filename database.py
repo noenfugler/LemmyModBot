@@ -2,6 +2,7 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
+from typing import Optional, List
 
 
 class Database:
@@ -28,8 +29,12 @@ class Database:
                                 "body_toxicity"	REAL,
                                 "body_non_toxicity"	REAL,
                                 "outcome"	TEXT,
+                                "phash" TEXT,
+                                "link" TEXT,
                                 PRIMARY KEY("id"));'''
         self.check_table_exists('posts', create_posts_table_sql)
+        self.update_table('''ALTER TABLE "posts" ADD COLUMN "phash" TEXT''')
+        self.update_table('''ALTER TABLE "posts" ADD COLUMN "link" TEXT''')
         create_phash_table_sql = '''CREATE TABLE "phash" (
             "url" STRING NOT NULL UNIQUE,
             "phash" STRING NOT NULL,
@@ -62,6 +67,13 @@ class Database:
             if len(list_of_tables) == 0:
                 # table does not yet exist.  Create it
                 cur.execute(create_sql)
+
+    def update_table(self, sql):
+        with self._session() as conn:
+            try:
+                conn.execute(sql)
+            except:
+                pass
 
     def in_comments_list(self, comment_id):
         """check whether this comment (comment_id) is stored in
@@ -105,16 +117,20 @@ class Database:
             sql = f'''UPDATE posts SET outcome=? WHERE id=?;'''
             conn.execute(sql, (outcome, post_id))
 
-    def add_to_posts_list(self, post_id, detox_name_results, detox_body_results):
+    def add_to_posts_list(self, post_id, detox_name_results, detox_body_results, extras, link):
         """ add a post id to the list of previously checked posts """
         with self._session() as conn:
             sql = f"""INSERT INTO posts(id, name_toxicity, name_non_toxicity, 
-            body_toxicity, body_non_toxicity) VALUES(?,?,?,?,?);"""
+            body_toxicity, body_non_toxicity, link, phash) VALUES(?,?,?,?,?,?,?);"""
 
             conn.execute(sql, (post_id,
-                               detox_name_results['toxicity'], detox_name_results['non_toxicity'],
+                               detox_name_results['toxicity'],
+                               detox_name_results['non_toxicity'],
                                detox_body_results['toxicity'] if 'toxicity' in detox_body_results else 0,
-                               detox_body_results['non_toxicity'] if 'non_toxicity' in detox_body_results else 1,))
+                               detox_body_results['non_toxicity'] if 'non_toxicity' in detox_body_results else 1,
+                               link,
+                               extras['phash'] if 'phash' in extras else None
+                               ))
 
     def add_phash(self, url: str, phash: str):
         with self._session() as conn:
@@ -130,11 +146,17 @@ class Database:
                     return True
         return False
 
-    def url_exists(self, url: str):
+    def url_exists(self, url: str) -> Optional[str]:
         with self._session() as conn:
-            sql = f"""SELECT COUNT(url) FROM phash where url=?"""
+            sql = f"""SELECT phash FROM phash where url=?"""
             result = conn.execute(sql, (url,))
-            for row in result.fetchone():
-                if row != 0:
-                    return True
-        return False
+            for row in result.fetchall():
+                if row[0] is not None:
+                    return row[0]
+        return None
+
+    def get_post_links_by_phash(self, phash: str) -> List[str]:
+        with self._session() as conn:
+            sql = f"""SELECT link FROM posts WHERE phash=? LIMIT 5"""
+            result = conn.execute(sql, (phash,))
+            return [row[0] for row in result.fetchall()]

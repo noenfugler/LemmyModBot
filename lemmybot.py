@@ -2,16 +2,10 @@
 
 import traceback
 from time import sleep
-import os
 from typing import Union, List
 import logging
 import sys
-import re
 from pprint import pprint
-import torch
-import numpy as np
-import torchtext
-import pandas as pd
 
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
@@ -19,8 +13,7 @@ from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
 import config
-from bag_of_words import BagOfWords, build_bow_model
-from processor import Processor, Content, ContentType
+from processors.base import Processor, Content, ContentType, LemmyHandle
 from reconnection_manager import ReconnectionDelayManager
 from database import Database
 
@@ -67,6 +60,8 @@ class LemmyBot:
         room_id : string - The id of the room e.g. "!my-fave-room:example.org"
         content : string - The content of the message e.g. "Hello World!"
         """
+        if m_server is None:
+            return
 
         # Create a Matrix client instance
         client = MatrixClient(m_server)
@@ -98,18 +93,19 @@ class LemmyBot:
         content = content.replace("<br>", " ")
         return content
 
-    def run_processors(self, content: Content, flags: List[str], extras):
-        comment = None
+    def run_processors(self, content: Content, elem: Union[Post, Comment], flags: List[str], extras):
         for processor in self.processors:
-            result = processor.execute(content)
+            result = processor.execute(content, LemmyHandle(
+                self.lemmy,
+                elem,
+                self.history_db
+            ))
             if result.flags is not None:
                 flags += result.flags
             if result.extras is not None:
                 extras = {**extras, **result.extras}
-            if result.comment is not None:
-                comment = result.comment
 
-        return flags, extras, comment
+        return flags, extras
 
     def process_comment(self, elem):
         """Determine if the comment is new and if so run through detoxifier.  If toxic, then rrt.
@@ -123,7 +119,6 @@ class LemmyBot:
         if not self.history_db.in_comments_list(comment_id):
             flags = []
             extras = {}
-            comment = None
 
             content = Content(
                 elem.comment_view.community.name,
@@ -132,7 +127,7 @@ class LemmyBot:
                 ContentType.COMMENT
             )
 
-            flags, extras, comment = self.run_processors(content, flags, extras)
+            flags, extras = self.run_processors(content, elem, flags, extras)
 
             self.history_db.add_to_comments_list(comment_id, extras)
             pprint(vars(elem))
@@ -161,9 +156,6 @@ class LemmyBot:
             else:
                 self.history_db.add_outcome_to_comment(comment_id, "No report")
 
-            if comment is not None:
-                elem.create_comment(f"{comment}\n\nMod bot (with L plates)")
-
             sleep(5)
         else:
             self.logger.info('Comment Already Assessed')
@@ -178,7 +170,7 @@ class LemmyBot:
             flags = []
             extras_title = {}
             extras_body = {}
-            comment = None
+            extras = {}
 
             title_content = Content(
                 elem.post_view.community.name,
@@ -192,10 +184,18 @@ class LemmyBot:
                 elem.post_view.creator.actor_id,
                 ContentType.POST_BODY
             )
+            link_content = Content(
+                elem.post_view.community.name,
+                elem.post_view.post.url,
+                elem.post_view.creator.actor_id,
+                ContentType.POST_BODY
+            )
 
-            flags, extras_title, comment = self.run_processors(title_content, flags, extras_title)
+            flags, extras_title = self.run_processors(title_content, elem, flags, extras_title)
             if body_content.content is not None:
-                flags, extras_body, comment = self.run_processors(body_content, flags, extras_body)
+                flags, extras_body = self.run_processors(body_content, elem, flags, extras_body)
+            if link_content.content is not None:
+                flags, extras = self.run_processors(link_content, elem, flags, extras)
 
             self.history_db.add_to_posts_list(post_id, extras_title, extras_body)
             pprint(elem)
@@ -224,9 +224,6 @@ class LemmyBot:
             else:
                 self.history_db.add_outcome_to_post(post_id, "No report")
 
-            if comment is not None:
-                elem.create_comment(f"{comment}\n\nMod bot (with L plates)")
-
             sleep(5)
 
         else:
@@ -244,7 +241,6 @@ class LemmyBot:
         # sleep(5)
 
     def run(self):
-        print("Test")
         """This is the main run loop for the bot.  It should be called after initiation of bot"""
         while True:
             try:

@@ -1,5 +1,5 @@
 from time import sleep
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -8,53 +8,11 @@ import torchtext
 from pandas import DataFrame
 from torch.types import Device
 from torchtext.vocab import Vocab
-import re
 
 import config
 from bag_of_words import BagOfWords, build_bow_model
-
-
-class ContentType:
-    POST_TITLE = 0
-    POST_BODY = 1
-    COMMENT = 2
-
-
-class Content:
-    community: str
-    content: str
-    actor_id: str
-    type: ContentType
-
-    def __init__(self, community: str, content: str, actor_id: str, type: ContentType):
-        self.community = community
-        self.content = content
-        self.actor_id = actor_id
-        self.type = type
-
-
-class ContentResult:
-    flags: List[str]
-    extras: Optional[Any]
-    comment: Optional[str]
-
-    def __init__(self, flags: List[str], extras: Optional[Any], comment: Optional[str] = None):
-        self.flags = flags
-        self.extras = extras
-        self.comment = comment
-
-    @staticmethod
-    def nothing():
-        return ContentResult([], None)
-
-
-class Processor:
-
-    def setup(self) -> None:
-        pass
-
-    def execute(self, content: Content) -> ContentResult:
-        return ContentResult.nothing()
+from processors import Processor, Content, LemmyHandle, ContentResult
+from processors.base import ContentType
 
 
 class ToxicityProcessor(Processor):
@@ -104,10 +62,13 @@ class ToxicityProcessor(Processor):
 
         self.vocab_size = len(self.vocab)
         self.model = BagOfWords(vocab_size=self.vocab_size)
-        self.model.load_state_dict(torch.load("data/model.mdl"))
+        self.model.load_state_dict(torch.load("./data/model.mdl"))
         self.model.eval()
 
-    def execute(self, content: Content) -> ContentResult:
+    def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
+        if content.type == ContentType.POST_LINK:
+            return ContentResult.nothing()
+
         local_flags = []
         my_tokens = {}
         if content is not None:
@@ -126,9 +87,9 @@ class ToxicityProcessor(Processor):
             print(f'{preds}', (1 - torch.argmax(preds)).item())
             if preds[0].item() < 0.2 and preds[1].item() < 0.2:
                 print("Low values^")
-            if abs(preds[0].item() - preds[1].item()) < config.uncertainty_allowance:
+            if abs(preds[0].item() - preds[1].item()) < self.uncertainty_allowance:
                 print("Close values^")
-            if preds2 == 1 and preds3 >= config.uncertainty_allowance:
+            if preds2 == 1 and preds3 >= self.uncertainty_allowance:
                 sleep(15)
                 print("Toxic^")
                 local_flags.append('potentially toxic')
@@ -151,50 +112,3 @@ class ToxicityProcessor(Processor):
         encoded = np.zeros((num_classes,))
         encoded[example['ids']] = 1
         return encoded
-
-
-class UserProcessor(Processor):
-    user_watch_list: List[str]
-
-    def __init__(self, user_watch_list: List[str]):
-        self.user_watch_list = user_watch_list
-
-    def execute(self, content: Content) -> ContentResult:
-        if content.actor_id in self.user_watch_list:
-            return ContentResult(['user_watch_list'], None)
-        return ContentResult.nothing()
-
-
-class BlacklistProcessor(Processor):
-    blacklist: List[str]
-    tokenizer: Any
-
-    def __init__(self, blacklist: List[str]):
-        self.blacklist = blacklist
-
-    def setup(self) -> None:
-        self.tokenizer = torchtext.data.utils.get_tokenizer("basic_english")
-
-    def execute(self, content: Content) -> ContentResult:
-        tokens = self.tokenizer(content.content.lower())
-        if any(x in self.blacklist for x in tokens):
-            return ContentResult(['word_blacklist'], None)
-        return ContentResult.nothing()
-
-
-class TitleCommenterProcessor(Processor):
-    message: str
-
-    def __init__(self, regex: str, message: str):
-        self.pattern = re.compile(regex)
-        self.message = message
-
-    def execute(self, content: Content) -> ContentResult:
-        if content.type != ContentType.POST_TITLE:
-            return ContentResult.nothing()
-
-        if not self.pattern.match(content.content):
-            return ContentResult([], None, self.message)
-
-        return ContentResult.nothing()
-

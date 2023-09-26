@@ -12,7 +12,7 @@ from torchtext.vocab import Vocab
 import config
 from bag_of_words import BagOfWords, build_bow_model
 from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.processor import ContentType
+from processors.base import ContentType
 
 
 class ToxicityProcessor(Processor):
@@ -62,7 +62,7 @@ class ToxicityProcessor(Processor):
 
         self.vocab_size = len(self.vocab)
         self.model = BagOfWords(vocab_size=self.vocab_size)
-        self.model.load_state_dict(torch.load("../data/model.mdl"))
+        self.model.load_state_dict(torch.load("./data/model.mdl"))
         self.model.eval()
 
     def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
@@ -87,9 +87,9 @@ class ToxicityProcessor(Processor):
             print(f'{preds}', (1 - torch.argmax(preds)).item())
             if preds[0].item() < 0.2 and preds[1].item() < 0.2:
                 print("Low values^")
-            if abs(preds[0].item() - preds[1].item()) < config.uncertainty_allowance:
+            if abs(preds[0].item() - preds[1].item()) < self.uncertainty_allowance:
                 print("Close values^")
-            if preds2 == 1 and preds3 >= config.uncertainty_allowance:
+            if preds2 == 1 and preds3 >= self.uncertainty_allowance:
                 sleep(15)
                 print("Toxic^")
                 local_flags.append('potentially toxic')

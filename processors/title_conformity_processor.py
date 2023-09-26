@@ -1,10 +1,10 @@
 import re
 
 from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.processor import ContentType
+from processors.base import ContentType
 
 
-class TitleCommenterProcessor(Processor):
+class TitleConformityProcessor(Processor):
     message: str
 
     def __init__(self, regex: str, message: str):

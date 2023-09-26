@@ -3,7 +3,7 @@ from typing import List, Any
 import torchtext
 
 from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.processor import ContentType
+from processors.base import ContentType
 
 
 class BlacklistProcessor(Processor):

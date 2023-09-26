@@ -2,21 +2,32 @@ from io import BytesIO
 
 import requests
 from PIL import Image
+import imagehash
 
 from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.processor import ContentType
+from processors.base import ContentType
 
 
 class PhashProcessor(Processor):
+
+    def __init__(self, message: str):
+        self.message = message
+
     def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
         if content.type != ContentType.POST_LINK:
             return ContentResult.nothing()
 
-        # if content
+        if handle.database.url_exists(content.content):
+            return self._warn_user(handle)
 
-        img = Image.open(BytesIO(requests.get(content.content).content))
+        phash = str(imagehash.phash(Image.open(BytesIO(requests.get(content.content).content))))
+        if handle.database.phash_exists(phash):
+            return self._warn_user(handle)
 
-        return super().execute(content, handle)
+        handle.database.add_phash(content.content, phash)
 
-    def warn_user(self, handle: LemmyHandle):
+        return ContentResult.nothing()
 
+    def _warn_user(self, handle: LemmyHandle) -> ContentResult:
+        handle.post_comment(self.message)
+        return ContentResult.nothing()

@@ -13,7 +13,7 @@ from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
 import config
-from processors.processor import Processor, Content, ContentType, LemmyHandle
+from processors.base import Processor, Content, ContentType, LemmyHandle
 from reconnection_manager import ReconnectionDelayManager
 from database import Database
 
@@ -60,6 +60,8 @@ class LemmyBot:
         room_id : string - The id of the room e.g. "!my-fave-room:example.org"
         content : string - The content of the message e.g. "Hello World!"
         """
+        if m_server is None:
+            return
 
         # Create a Matrix client instance
         client = MatrixClient(m_server)
@@ -239,7 +241,6 @@ class LemmyBot:
         # sleep(5)
 
     def run(self):
-        print("Test")
         """This is the main run loop for the bot.  It should be called after initiation of bot"""
         while True:
             try:

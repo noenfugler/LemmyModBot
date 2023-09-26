@@ -1,6 +1,7 @@
 from typing import List
 
 from processors import Processor, Content, LemmyHandle, ContentResult
+from processors.processor import ContentType
 
 
 class UserProcessor(Processor):
@@ -10,6 +11,9 @@ class UserProcessor(Processor):
         self.user_watch_list = user_watch_list
 
     def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
+        if content.type == ContentType.POST_LINK:
+            return ContentResult.nothing()
+
         if content.actor_id in self.user_watch_list:
             return ContentResult(['user_watch_list'], None)
         return ContentResult.nothing()

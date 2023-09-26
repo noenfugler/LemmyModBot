@@ -12,6 +12,7 @@ from torchtext.vocab import Vocab
 import config
 from bag_of_words import BagOfWords, build_bow_model
 from processors import Processor, Content, LemmyHandle, ContentResult
+from processors.processor import ContentType
 
 
 class ToxicityProcessor(Processor):
@@ -65,6 +66,9 @@ class ToxicityProcessor(Processor):
         self.model.eval()
 
     def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
+        if content.type == ContentType.POST_LINK:
+            return ContentResult.nothing()
+
         local_flags = []
         my_tokens = {}
         if content is not None:

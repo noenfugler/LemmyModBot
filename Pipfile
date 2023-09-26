@@ -13,6 +13,7 @@ mypy-extensions = "*"
 matrix-client = "*"
 scikit-learn = "*"
 wheel = "*"
+imagehash = "*"
 
 [dev-packages]
 

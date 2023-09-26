@@ -3,6 +3,7 @@ from typing import List, Any
 import torchtext
 
 from processors import Processor, Content, LemmyHandle, ContentResult
+from processors.processor import ContentType
 
 
 class BlacklistProcessor(Processor):
@@ -16,6 +17,9 @@ class BlacklistProcessor(Processor):
         self.tokenizer = torchtext.data.utils.get_tokenizer("basic_english")
 
     def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
+        if content.type == ContentType.POST_LINK:
+            return ContentResult.nothing()
+
         tokens = self.tokenizer(content.content.lower())
         if any(x in self.blacklist for x in tokens):
             return ContentResult(['word_blacklist'], None)

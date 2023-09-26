@@ -5,14 +5,16 @@ from pylemmy.models.comment import Comment
 from pylemmy.models.post import Post
 import re
 from api import LemmyModHttp
+from database import Database
 
 
 class LemmyHandle:
 
-    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment]):
+    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment], database: Database):
         self.elem = elem
         self.lemmy = lemmy
         self.lemmy_http = LemmyModHttp(lemmy)
+        self.database = database
 
     def send_message_to_author(self, content: str):
         actor_id = self.elem.post_view.post.creator_id if isinstance(self.elem, Post) else self.elem.comment_view

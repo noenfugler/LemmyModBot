@@ -13,7 +13,7 @@ from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
 import config
-from processors.processor import Processor, Content, ContentType
+from processors.processor import Processor, Content, ContentType, LemmyHandle
 from reconnection_manager import ReconnectionDelayManager
 from database import Database
 
@@ -91,10 +91,13 @@ class LemmyBot:
         content = content.replace("<br>", " ")
         return content
 
-    def run_processors(self, content: Content, flags: List[str], extras):
-        comment = None
+    def run_processors(self, content: Content, elem: Union[Post, Comment], flags: List[str], extras):
         for processor in self.processors:
-            result = processor.execute(content)
+            result = processor.execute(content, LemmyHandle(
+                self.lemmy,
+                elem,
+                self.history_db
+            ))
             if result.flags is not None:
                 flags += result.flags
             if result.extras is not None:
@@ -122,7 +125,7 @@ class LemmyBot:
                 ContentType.COMMENT
             )
 
-            flags, extras = self.run_processors(content, flags, extras)
+            flags, extras = self.run_processors(content, elem, flags, extras)
 
             self.history_db.add_to_comments_list(comment_id, extras)
             pprint(vars(elem))
@@ -165,6 +168,7 @@ class LemmyBot:
             flags = []
             extras_title = {}
             extras_body = {}
+            extras = {}
 
             title_content = Content(
                 elem.post_view.community.name,
@@ -178,10 +182,18 @@ class LemmyBot:
                 elem.post_view.creator.actor_id,
                 ContentType.POST_BODY
             )
+            link_content = Content(
+                elem.post_view.community.name,
+                elem.post_view.post.url,
+                elem.post_view.creator.actor_id,
+                ContentType.POST_BODY
+            )
 
-            flags, extras_title = self.run_processors(title_content, flags, extras_title)
+            flags, extras_title = self.run_processors(title_content, elem, flags, extras_title)
             if body_content.content is not None:
-                flags, extras_body = self.run_processors(body_content, flags, extras_body)
+                flags, extras_body = self.run_processors(body_content, elem, flags, extras_body)
+            if link_content.content is not None:
+                flags, extras = self.run_processors(link_content, elem, flags, extras)
 
             self.history_db.add_to_posts_list(post_id, extras_title, extras_body)
             pprint(elem)

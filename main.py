@@ -1,5 +1,5 @@
 from lemmybot import LemmyBot
-from processor import ToxicityProcessor, UserProcessor, BlacklistProcessor
+from processors import ToxicityProcessor
 
 if __name__ == "__main__":
     bot = LemmyBot([

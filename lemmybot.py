@@ -2,16 +2,10 @@
 
 import traceback
 from time import sleep
-import os
 from typing import Union, List
 import logging
 import sys
-import re
 from pprint import pprint
-import torch
-import numpy as np
-import torchtext
-import pandas as pd
 
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
@@ -19,8 +13,7 @@ from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
 import config
-from bag_of_words import BagOfWords, build_bow_model
-from processor import Processor, Content, ContentType
+from processors.processor import Processor, Content, ContentType
 from reconnection_manager import ReconnectionDelayManager
 from database import Database
 

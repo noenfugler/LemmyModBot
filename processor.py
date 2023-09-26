@@ -1,23 +1,49 @@
 from time import sleep
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Union
 
 import numpy as np
 import pandas as pd
 import torch
 import torchtext
 from pandas import DataFrame
+from pylemmy import Lemmy, api
+from pylemmy.models.comment import Comment
+from pylemmy.models.post import Post
 from torch.types import Device
 from torchtext.vocab import Vocab
 import re
 
 import config
+from api import LemmyModHttp
 from bag_of_words import BagOfWords, build_bow_model
+
+
+class LemmyHandle:
+
+    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment]):
+        self.elem = elem
+        self.lemmy = lemmy
+        self.lemmy_http = LemmyModHttp(lemmy)
+
+    def send_message_to_author(self, content: str):
+        actor_id = self.elem.post_view.post.creator_id if isinstance(self.elem, Post) else self.elem.comment_view
+        self.lemmy_http.send_message(actor_id, f"{content}\n\nMod bot (with L plates)")
+
+    def post_comment(self, content: str) -> Comment:
+        return self.elem.create_comment(f"{content}\n\nMod bot (with L plates)")
+
+    def remove_thing(self, reason: str):
+        if isinstance(self.elem, Post):
+            self.lemmy_http.remove_post(self.elem.post_view.post.id, reason)
+        elif isinstance(self.elem, Comment):
+            self.lemmy_http.remove_comment(self.elem.comment_view.comment.id, reason)
 
 
 class ContentType:
     POST_TITLE = 0
     POST_BODY = 1
-    COMMENT = 2
+    POST_LINK = 2
+    COMMENT = 3
 
 
 class Content:
@@ -36,12 +62,10 @@ class Content:
 class ContentResult:
     flags: List[str]
     extras: Optional[Any]
-    comment: Optional[str]
 
-    def __init__(self, flags: List[str], extras: Optional[Any], comment: Optional[str] = None):
+    def __init__(self, flags: List[str], extras: Optional[Any]):
         self.flags = flags
         self.extras = extras
-        self.comment = comment
 
     @staticmethod
     def nothing():
@@ -53,7 +77,7 @@ class Processor:
     def setup(self) -> None:
         pass
 
-    def execute(self, content: Content) -> ContentResult:
+    def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
         return ContentResult.nothing()
 
 
@@ -107,7 +131,7 @@ class ToxicityProcessor(Processor):
         self.model.load_state_dict(torch.load("data/model.mdl"))
         self.model.eval()
 
-    def execute(self, content: Content) -> ContentResult:
+    def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
         local_flags = []
         my_tokens = {}
         if content is not None:
@@ -159,7 +183,7 @@ class UserProcessor(Processor):
     def __init__(self, user_watch_list: List[str]):
         self.user_watch_list = user_watch_list
 
-    def execute(self, content: Content) -> ContentResult:
+    def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
         if content.actor_id in self.user_watch_list:
             return ContentResult(['user_watch_list'], None)
         return ContentResult.nothing()
@@ -175,7 +199,7 @@ class BlacklistProcessor(Processor):
     def setup(self) -> None:
         self.tokenizer = torchtext.data.utils.get_tokenizer("basic_english")
 
-    def execute(self, content: Content) -> ContentResult:
+    def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
         tokens = self.tokenizer(content.content.lower())
         if any(x in self.blacklist for x in tokens):
             return ContentResult(['word_blacklist'], None)
@@ -189,12 +213,13 @@ class TitleCommenterProcessor(Processor):
         self.pattern = re.compile(regex)
         self.message = message
 
-    def execute(self, content: Content) -> ContentResult:
+    def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
         if content.type != ContentType.POST_TITLE:
             return ContentResult.nothing()
 
         if not self.pattern.match(content.content):
-            return ContentResult([], None, self.message)
+            handle.post_comment(self.message)
 
         return ContentResult.nothing()
+
 

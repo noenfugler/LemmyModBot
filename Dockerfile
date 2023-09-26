@@ -1,7 +1,5 @@
 FROM pytorch/pytorch
 
-RUN apt update \
-    && apt install -yqq wget git gnupg curl python3-pip nvidia-cuda-toolkit nvidia-cuda-toolkit-gcc
 RUN pip3 install pipenv
 
 # Copy source files

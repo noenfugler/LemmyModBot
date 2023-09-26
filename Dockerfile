@@ -1,4 +1,4 @@
-FROM python:3.11-slim as base
+FROM pytorch/pytorch
 
 RUN apt update \
     && apt install -yqq wget git gnupg curl python3-pip nvidia-cuda-toolkit nvidia-cuda-toolkit-gcc

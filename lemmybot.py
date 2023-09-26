@@ -98,6 +98,19 @@ class LemmyBot:
         content = content.replace("<br>", " ")
         return content
 
+    def run_processors(self, content: Content, flags: List[str], extras):
+        comment = None
+        for processor in self.processors:
+            result = processor.execute(content)
+            if result.flags is not None:
+                flags += result.flags
+            if result.extras is not None:
+                extras = {**extras, **result.extras}
+            if result.comment is not None:
+                comment = result.comment
+
+        return flags, extras, comment
+
     def process_comment(self, elem):
         """Determine if the comment is new and if so run through detoxifier.  If toxic, then rrt.
         Update database accordingly"""
@@ -110,6 +123,7 @@ class LemmyBot:
         if not self.history_db.in_comments_list(comment_id):
             flags = []
             extras = {}
+            comment = None
 
             content = Content(
                 elem.comment_view.community.name,
@@ -118,12 +132,7 @@ class LemmyBot:
                 ContentType.COMMENT
             )
 
-            for processor in self.processors:
-                result = processor.execute(content)
-                if result.flags is not None:
-                    flags += result.flags
-                if result.extras is not None:
-                    extras = {**extras, **result.extras}
+            flags, extras, comment = self.run_processors(content, flags, extras)
 
             self.history_db.add_to_comments_list(comment_id, extras)
             pprint(vars(elem))
@@ -151,6 +160,10 @@ class LemmyBot:
                                             m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_comment(comment_id, "No report")
+
+            if comment is not None:
+                elem.create_comment(f"{comment}\n\nMod bot (with L plates)")
+
             sleep(5)
         else:
             self.logger.info('Comment Already Assessed')
@@ -165,6 +178,7 @@ class LemmyBot:
             flags = []
             extras_title = {}
             extras_body = {}
+            comment = None
 
             title_content = Content(
                 elem.post_view.community.name,
@@ -179,20 +193,9 @@ class LemmyBot:
                 ContentType.POST_BODY
             )
 
-            for processor in self.processors:
-                result = processor.execute(title_content)
-                if result.flags is not None:
-                    flags += result.flags
-                if result.extras is not None:
-                    extras_title = {**extras_title, **result.extras}
-
+            flags, extras_title, comment = self.run_processors(title_content, flags, extras_title)
             if body_content.content is not None:
-                for processor in self.processors:
-                    result = processor.execute(body_content)
-                    if result.flags is not None:
-                        flags += result.flags
-                    if result.extras is not None:
-                        extras_body = {**extras_body, **result.extras}
+                flags, extras_body, comment = self.run_processors(body_content, flags, extras_body)
 
             self.history_db.add_to_posts_list(post_id, extras_title, extras_body)
             pprint(elem)
@@ -220,6 +223,10 @@ class LemmyBot:
                                             m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_post(post_id, "No report")
+
+            if comment is not None:
+                elem.create_comment(f"{comment}\n\nMod bot (with L plates)")
+
             sleep(5)
 
         else:

@@ -8,10 +8,10 @@ import torchtext
 from pandas import DataFrame
 from torch.types import Device
 from torchtext.vocab import Vocab
+import re
 
 import config
 from bag_of_words import BagOfWords, build_bow_model
-from config import train_filename, rebuild_model
 
 
 class ContentType:
@@ -36,10 +36,16 @@ class Content:
 class ContentResult:
     flags: List[str]
     extras: Optional[Any]
+    comment: Optional[str]
 
-    def __init__(self, flags: List[str], extras: Optional[Any]):
+    def __init__(self, flags: List[str], extras: Optional[Any], comment: Optional[str] = None):
         self.flags = flags
         self.extras = extras
+        self.comment = comment
+
+    @staticmethod
+    def nothing():
+        return ContentResult([], None)
 
 
 class Processor:
@@ -48,11 +54,13 @@ class Processor:
         pass
 
     def execute(self, content: Content) -> ContentResult:
-        pass
+        return ContentResult.nothing()
 
 
 class ToxicityProcessor(Processor):
     train_filename: str
+    rebuild_model: bool
+    uncertainty_allowance = 0.2
     device: Device
     tokenizer: Any
     all_data: DataFrame
@@ -60,11 +68,14 @@ class ToxicityProcessor(Processor):
     vocab_size: int
     model: BagOfWords
 
+    def __init__(self, train_filename: str = "training/train.tsv", rebuild_model: bool = True):
+        self.train_filename = train_filename
+        self.rebuild_model = rebuild_model
+
     def setup(self) -> None:
-        if config.rebuild_model:
+        if self.rebuild_model:
             build_bow_model()
 
-        self.train_filename = config.train_filename
         # initialise deep neural network model
         """
         Load the data and set up the tokenizer and dataset for creating/training/using the model.
@@ -127,7 +138,7 @@ class ToxicityProcessor(Processor):
                 "non_toxicity": preds[1].item(),
             })
         else:
-            return ContentResult([], None)
+            return ContentResult.nothing()
 
     def numericalize_data(self, example):
         """ Convert tokens into vocabulary index."""
@@ -143,21 +154,47 @@ class ToxicityProcessor(Processor):
 
 
 class UserProcessor(Processor):
+    user_watch_list: List[str]
+
+    def __init__(self, user_watch_list: List[str]):
+        self.user_watch_list = user_watch_list
 
     def execute(self, content: Content) -> ContentResult:
-        if content.actor_id in config.user_watch_list:
+        if content.actor_id in self.user_watch_list:
             return ContentResult(['user_watch_list'], None)
-        return ContentResult([], None)
+        return ContentResult.nothing()
 
 
 class BlacklistProcessor(Processor):
+    blacklist: List[str]
     tokenizer: Any
+
+    def __init__(self, blacklist: List[str]):
+        self.blacklist = blacklist
 
     def setup(self) -> None:
         self.tokenizer = torchtext.data.utils.get_tokenizer("basic_english")
 
     def execute(self, content: Content) -> ContentResult:
         tokens = self.tokenizer(content.content.lower())
-        if any(x in config.blacklist for x in tokens):
+        if any(x in self.blacklist for x in tokens):
             return ContentResult(['word_blacklist'], None)
-        return ContentResult([], None)
+        return ContentResult.nothing()
+
+
+class TitleCommenterProcessor(Processor):
+    message: str
+
+    def __init__(self, regex: str, message: str):
+        self.pattern = re.compile(regex)
+        self.message = message
+
+    def execute(self, content: Content) -> ContentResult:
+        if content.type != ContentType.POST_TITLE:
+            return ContentResult.nothing()
+
+        if not self.pattern.match(content.content):
+            return ContentResult([], None, self.message)
+
+        return ContentResult.nothing()
+

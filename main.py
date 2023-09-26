@@ -3,8 +3,6 @@ from processor import ToxicityProcessor, UserProcessor, BlacklistProcessor
 
 if __name__ == "__main__":
     bot = LemmyBot([
-        ToxicityProcessor(),
-        UserProcessor(),
-        BlacklistProcessor()
+        ToxicityProcessor()
     ])
     bot.run()

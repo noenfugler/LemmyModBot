@@ -197,7 +197,13 @@ class LemmyBot:
             if link_content.content is not None:
                 flags, extras = self.run_processors(link_content, elem, flags, extras)
 
-            self.history_db.add_to_posts_list(post_id, extras_title, extras_body)
+            self.history_db.add_to_posts_list(
+                post_id,
+                extras_title,
+                extras_body,
+                extras,
+                f"{config.instance}/post/{elem.post_view.post.id}"
+            )
             pprint(elem)
             if len(flags) > 0:
                 self.logger.info('REPORT FOR POST: %s', flags)

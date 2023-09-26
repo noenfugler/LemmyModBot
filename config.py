@@ -1,4 +1,4 @@
-# Rename this file to credentials.py and update the values below.
+# Rename this file to config.py and update the values below.
 import os
 
 username = os.getenv("LEMMY_USERNAME")
@@ -6,9 +6,11 @@ password = os.getenv("LEMMY_PASSWORD")
 instance = os.getenv("LEMMY_INSTANCE")
 owner_username = os.getenv("LEMMY_OWNER_USERNAME")
 communities = [x.strip() for x in os.getenv("LEMMY_COMMUNITIES").split(',')]
-question_communities = []
 user_watch_list = []
 debug_mode = False  # Setting this value to true will mean that the bot will not actually submit reports.
+
+train_filename = "training/train.tsv"
+rebuild_model = True
 
 # The bot basically works on a balance of probabilities approach when deciding whether to report
 # content as toxic.  The following parameter increases the threshold of certainty that

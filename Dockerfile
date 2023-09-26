@@ -1,7 +1,7 @@
 FROM python:3.11-slim as base
 
 RUN apt update \
-    && apt install -yqq wget git gnupg curl python3-pip
+    && apt install -yqq wget git gnupg curl python3-pip nvidia-cuda-toolkit nvidia-cuda-toolkit-gcc
 RUN pip3 install pipenv
 
 # Copy source files
@@ -9,4 +9,4 @@ COPY . /app
 WORKDIR /app
 RUN pipenv install --system --deploy --ignore-pipfile
 
-CMD ["pipenv", "run", "python", "/app/main.py"]
+CMD ["python", "-m", "/app/main.py"]

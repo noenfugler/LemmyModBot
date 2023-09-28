@@ -161,4 +161,11 @@ cython_debug/
 
 # Project specific files
 history/*
-credentials.py
+
+.DS_Store
+
+.idea/
+
+model.mdl
+
+data/

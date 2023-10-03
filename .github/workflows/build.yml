@@ -75,10 +75,6 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - id: repoowner
-        uses: ASzc/change-string-case-action@v5
-        with:
-          string: ${{ github.repository_owner }}
       - id: repo
         uses: ASzc/change-string-case-action@v5
         with:
@@ -88,7 +84,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/${{ steps.repoowner.outputs.lowercase }}/${{ steps.repo.outputs.lowercase }}
+            ghcr.io/${{ steps.repo.outputs.lowercase }}
           tags: |
             type=schedule
             type=ref,event=branch
@@ -111,5 +107,5 @@ jobs:
           push: true
           tags: |
             ${{ steps.meta.outputs.tags }}
-            ghcr.io/${{ steps.repoowner.outputs.lowercase }}/${{ steps.repo.outputs.lowercase }}:latest
-            ghcr.io/${{ steps.repoowner.outputs.lowercase }}/${{ steps.repo.outputs.lowercase }}:${{ needs.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.lowercase }}:latest
+            ghcr.io/${{ steps.repo.outputs.lowercase }}:${{ needs.version.outputs.version }}

@@ -1,4 +1,4 @@
-from .base import Processor, LemmyHandle, Content, ContentResult
+from .base import Processor, LemmyHandle, Content, ContentResult, ContentType
 from .user_processor import UserProcessor
 from .toxicity_processor import ToxicityProcessor
 from .blacklist_processor import BlacklistProcessor

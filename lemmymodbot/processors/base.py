@@ -1,13 +1,11 @@
 from typing import List, Any, Optional, Union
-import torchtext
 from pylemmy import Lemmy
 from pylemmy.models.comment import Comment
 from pylemmy.models.post import Post
-import re
 
-from src import config
-from src.api import LemmyModHttp
-from src.database import Database
+from lemmymodbot import config
+from lemmymodbot.api import LemmyModHttp
+from lemmymodbot.database import Database
 
 
 class LemmyHandle:

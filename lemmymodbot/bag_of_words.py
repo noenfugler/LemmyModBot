@@ -145,7 +145,7 @@ def build_bow_model():
     # train_dataset = torch.tensor(train_data)
     # valid_dataset = torch.tensor(valid_data)
     # test_dataset = torch.tensor(test_data)
-    # test
+    # tests
 
     # train_tensor = torch.tensor(train_data)
     # valid_tensor = torch.tensor(valid_data)
@@ -211,7 +211,7 @@ def build_bow_model():
             accuracies.append(accuracy.detach().cpu().numpy())
         return np.mean(losses), np.mean(accuracies)
 
-    # Define function `evaluate`, which we will use to evaluate the model with the validation and test sets.
+    # Define function `evaluate`, which we will use to evaluate the model with the validation and tests sets.
 
     def evaluate(model, dataloader, loss_fn, device):
         model.eval()
@@ -267,7 +267,7 @@ def build_bow_model():
         #     valid_loss, valid_accuracy, confusion_mat = evaluate(model, valid_dataloader, loss_fn, device)
         valid_loss, valid_accuracy = evaluate(model, valid_dataloader, loss_fn, device)
         ##
-        # The following  line was commented until the final model was trained and the results with the test data were evaluated.
+        # The following  line was commented until the final model was trained and the results with the tests data were evaluated.
         ##
         # test_loss, test_accuracy, test_confusion_mat = evaluate(model, test_dataloader, loss_fn, device)
 
@@ -277,7 +277,7 @@ def build_bow_model():
         valid_losses.append(valid_loss)
         valid_accuracies.append(valid_accuracy)
         ##
-        # The following 2 lines were commented until the final model was trained and the results with the test data were evaluated.
+        # The following 2 lines were commented until the final model was trained and the results with the tests data were evaluated.
         ##
         # test_losses.append(test_loss)
         # test_accuracies.append(test_accuracy)

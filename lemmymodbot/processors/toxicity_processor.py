@@ -1,5 +1,5 @@
 from time import sleep
-from typing import List, Any, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -9,10 +9,9 @@ from pandas import DataFrame
 from torch.types import Device
 from torchtext.vocab import Vocab
 
-from src import config
-from src.bag_of_words import BagOfWords, build_bow_model
-from src.processors import Processor, Content, LemmyHandle, ContentResult
-from src.processors.base import ContentType
+from lemmymodbot.bag_of_words import BagOfWords, build_bow_model
+from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult
+from lemmymodbot.processors.base import ContentType
 
 
 class ToxicityProcessor(Processor):

@@ -5,7 +5,7 @@ from pylemmy import Lemmy
 from pylemmy.api.utils import BaseApiModel
 from pylemmy.endpoints import LemmyAPI
 
-from src.api import LemmyModAPI, PostMessage, PostRemovePost, PostRemoveComment
+from lemmymodbot.api import LemmyModAPI, PostMessage, PostRemovePost, PostRemoveComment
 
 
 class LemmyModHttp:

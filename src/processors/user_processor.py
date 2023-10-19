@@ -1,7 +1,7 @@
 from typing import List
 
-from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.base import ContentType
+from src.processors import Processor, Content, LemmyHandle, ContentResult
+from src.processors.base import ContentType
 
 
 class UserProcessor(Processor):

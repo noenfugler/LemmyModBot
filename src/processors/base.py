@@ -5,9 +5,9 @@ from pylemmy.models.comment import Comment
 from pylemmy.models.post import Post
 import re
 
-import config
-from api import LemmyModHttp
-from database import Database
+from src import config
+from src.api import LemmyModHttp
+from src.database import Database
 
 
 class LemmyHandle:

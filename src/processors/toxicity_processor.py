@@ -9,10 +9,10 @@ from pandas import DataFrame
 from torch.types import Device
 from torchtext.vocab import Vocab
 
-import config
-from bag_of_words import BagOfWords, build_bow_model
-from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.base import ContentType
+from src import config
+from src.bag_of_words import BagOfWords, build_bow_model
+from src.processors import Processor, Content, LemmyHandle, ContentResult
+from src.processors.base import ContentType
 
 
 class ToxicityProcessor(Processor):

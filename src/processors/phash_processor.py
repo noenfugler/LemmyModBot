@@ -4,8 +4,8 @@ import requests
 from PIL import Image
 import imagehash
 
-from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.base import ContentType
+from src.processors import Processor, Content, LemmyHandle, ContentResult
+from src.processors.base import ContentType
 
 
 class PhashProcessor(Processor):

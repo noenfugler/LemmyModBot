@@ -13,7 +13,7 @@ from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
 import config
-from processors.base import Processor, Content, ContentType, LemmyHandle
+from src.processors.base import Processor, Content, ContentType, LemmyHandle
 from reconnection_manager import ReconnectionDelayManager
 from database import Database
 

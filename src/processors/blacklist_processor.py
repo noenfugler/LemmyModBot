@@ -2,8 +2,8 @@ from typing import List, Any
 
 import torchtext
 
-from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.base import ContentType
+from src.processors import Processor, Content, LemmyHandle, ContentResult
+from src.processors.base import ContentType
 
 
 class BlacklistProcessor(Processor):

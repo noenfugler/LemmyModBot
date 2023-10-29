@@ -18,13 +18,13 @@ class TestPhashProcessor(unittest.TestCase):
         )
         handle = Mock()
         handle.database.url_exists.return_value = None
-        handle.fetch_image.return_value = ("phash_value", "image_data")
+        handle.fetch_image.return_value = ("image_data", "phash_value")
         handle.database.phash_exists.return_value = False
         handle.database.add_phash.return_value = None
 
         result = self.processor.execute(content, handle)
 
-        self.assertEqual(result.data, {"phash": "phash_value"})
+        self.assertEqual(result.extras, {"phash": "phash_value"})
         handle.post_comment.assert_not_called()
 
     def test_execute_existing_phash(self):

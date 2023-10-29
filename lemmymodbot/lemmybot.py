@@ -25,9 +25,9 @@ class LemmyBot:
     performing regexp matching, user watchlist monitoring amongst other things."""
 
     def __init__(
-        self,
-        processors: List[Processor],
-        config: Config = None
+            self,
+            processors: List[Processor],
+            config: Config = None
     ):
         self.config = config if config is not None else environment_config()
         self.processors = processors
@@ -50,7 +50,7 @@ class LemmyBot:
             password=self.config.password,
             user_agent="custom user agent (by " + self.config.owner_username + ")",
         )
-        
+
         db_directory_name = 'data'
         db_file_name = 'history.db'
         self.history_db = Database(db_directory_name, db_file_name)
@@ -140,13 +140,14 @@ class LemmyBot:
             if len(flags) > 0:
                 # we found something bad
                 self.logger.info('REPORT FOR COMMENT: %s', flags)
+                # noinspection PyBroadException
                 try:
                     if not self.config.debug_mode:
                         elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                     self.logger.info('****************\nREPORTED COMMENT\n******************')
                     self.history_db.add_outcome_to_comment(comment_id, "Reported comment for: "
                                                            + '|'.join(flags))
-                except:
+                except Exception:
                     self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                     self.history_db.add_outcome_to_comment(comment_id, "Failed to report comment for: "
                                                            + '|'.join(flags) + " due to exception :"
@@ -213,13 +214,14 @@ class LemmyBot:
             pprint(elem)
             if len(flags) > 0:
                 self.logger.info('REPORT FOR POST: %s', flags)
+                # noinspection PyBroadException
                 try:
                     if not self.config.debug_mode:
                         elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                     self.logger.info('****************\nREPORTED POST\n******************')
                     self.history_db.add_outcome_to_post(post_id, "Reported Post for: "
                                                         + '|'.join(flags))
-                except:
+                except Exception:
                     self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                     self.history_db.add_outcome_to_comment(post_id, "Failed to report post for: "
                                                            + '|'.join(flags) + " due to exception :"
@@ -255,9 +257,10 @@ class LemmyBot:
     def run(self):
         """This is the main run loop for the bot.  It should be called after initiation of bot"""
         while True:
+            # noinspection PyBroadException
             try:
                 multi_stream = self.lemmy.multi_communities_stream(self.config.communities)
                 multi_stream.content_apply(self.process_content)
-            except:
+            except Exception:
                 self.logger.error("Exception raised!", exc_info=True)
                 self.mydelay.wait()

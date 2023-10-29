@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
-from lemmymodbot import UserProcessor, Content, ContentType, LemmyHandle, ContentResult
+from lemmymodbot import UserProcessor, Content, ContentType
 
 
 class TestUserWatchListProcessor(unittest.TestCase):

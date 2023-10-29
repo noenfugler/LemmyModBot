@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock
-from lemmymodbot import TitleConformityProcessor, ContentResult, ContentType, Content
+from lemmymodbot import TitleConformityProcessor, ContentType, Content
 
 
 class TestTitleConformityProcessor(unittest.TestCase):

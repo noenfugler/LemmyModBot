@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
-from lemmymodbot import BlacklistProcessor, ContentType, ContentResult
+from lemmymodbot import BlacklistProcessor, ContentType
 
 
 class TestBlacklistProcessor(unittest.TestCase):

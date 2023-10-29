@@ -24,4 +24,3 @@ jobs:
         run: |
           pip install ruff
           ruff --output-format=github .
-          

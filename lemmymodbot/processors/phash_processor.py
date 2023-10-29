@@ -4,8 +4,8 @@ import requests
 from PIL import Image
 import imagehash
 
-from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.base import ContentType
+from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult
+from lemmymodbot.processors.base import ContentType
 
 
 class PhashProcessor(Processor):
@@ -18,7 +18,7 @@ class PhashProcessor(Processor):
         if phash is not None:
             return self._warn_user(handle, phash)
 
-        phash = str(imagehash.phash(Image.open(BytesIO(requests.get(content.content).content))))
+        phash = handle.fetch_image(content.content)[1]
         if handle.database.phash_exists(phash):
             handle.database.add_phash(content.content, phash)
             return self._warn_user(handle, phash)

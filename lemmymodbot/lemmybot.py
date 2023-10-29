@@ -12,18 +12,24 @@ from pylemmy.models.post import Post
 from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
-import config
-from processors.base import Processor, Content, ContentType, LemmyHandle
-from reconnection_manager import ReconnectionDelayManager
-from database import Database
+from .config import Config
+from lemmymodbot.processors.base import Processor, Content, ContentType, LemmyHandle
+from .reconnection_manager import ReconnectionDelayManager
+from .database import Database
 
 
 class LemmyBot:
     processors: List[Processor]
+    config: Config
     """ LemmyBot is a bot that checks Lemmy posts and comments for toxicity, as well as
     performing regexp matching, user watchlist monitoring amongst other things."""
 
-    def __init__(self, processors: List[Processor]):
+    def __init__(
+            self,
+            processors: List[Processor],
+            config: Config
+    ):
+        self.config = config
         self.processors = processors
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
@@ -135,7 +141,7 @@ class LemmyBot:
                 # we found something bad
                 self.logger.info('REPORT FOR COMMENT: %s', flags)
                 try:
-                    if not config.debug_mode:
+                    if not self.config.debug_mode:
                         elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                     self.logger.info('****************\nREPORTED COMMENT\n******************')
                     self.history_db.add_outcome_to_comment(comment_id, "Reported comment for: "
@@ -148,10 +154,10 @@ class LemmyBot:
                 matrix_message = '\n\nMod bot (with L plates) : ' + ', '.join(flags)
                 matrix_message = matrix_message + '\n' + str(extras)
                 matrix_message = matrix_message + '\n' + str(elem.comment_view.comment)
-                self.send_message_to_matrix(m_server=config.matrix_server,
-                                            m_account=config.matrix_account,
-                                            m_password=config.matrix_password,
-                                            m_room_id=config.matrix_room_id,
+                self.send_message_to_matrix(m_server=self.config.matrix_config.server,
+                                            m_account=self.config.matrix_config.account,
+                                            m_password=self.config.matrix_config.password,
+                                            m_room_id=self.config.matrix_config.room_id,
                                             m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_comment(comment_id, "No report")
@@ -202,13 +208,13 @@ class LemmyBot:
                 extras_title,
                 extras_body,
                 extras,
-                f"{config.instance}/post/{elem.post_view.post.id}"
+                f"{self.config.instance}/post/{elem.post_view.post.id}"
             )
             pprint(elem)
             if len(flags) > 0:
                 self.logger.info('REPORT FOR POST: %s', flags)
                 try:
-                    if not config.debug_mode:
+                    if not self.config.debug_mode:
                         elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                     self.logger.info('****************\nREPORTED POST\n******************')
                     self.history_db.add_outcome_to_post(post_id, "Reported Post for: "
@@ -222,10 +228,10 @@ class LemmyBot:
                 matrix_message = matrix_message + '\n' + str(extras_title)
                 matrix_message = matrix_message + '\n' + str(extras_body)
                 matrix_message = matrix_message + '\n' + str(elem.post_view.post)
-                self.send_message_to_matrix(m_server=config.matrix_server,
-                                            m_account=config.matrix_account,
-                                            m_password=config.matrix_password,
-                                            m_room_id=config.matrix_room_id,
+                self.send_message_to_matrix(m_server=self.config.matrix_config.server,
+                                            m_account=self.config.matrix_config.account,
+                                            m_password=self.config.matrix_config.password,
+                                            m_room_id=self.config.matrix_config.room_id,
                                             m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_post(post_id, "No report")
@@ -250,7 +256,7 @@ class LemmyBot:
         """This is the main run loop for the bot.  It should be called after initiation of bot"""
         while True:
             try:
-                multi_stream = self.lemmy.multi_communities_stream(config.communities)
+                multi_stream = self.lemmy.multi_communities_stream(self.config.communities)
                 multi_stream.content_apply(self.process_content)
             except:
                 self.logger.error("Exception raised!", exc_info=True)

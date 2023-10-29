@@ -9,4 +9,4 @@ COPY . /app
 WORKDIR /app
 RUN pipenv install --system --deploy --ignore-pipfile
 
-CMD ["python", "main.py"]
+CMD ["python", "src/main.py"]

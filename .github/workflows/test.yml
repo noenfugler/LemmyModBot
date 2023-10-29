@@ -16,9 +16,11 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install pipenv
-        run: pip install pipenv pytest pytest-cov
+        run: pip install pipenv
       - name: Install dependencies
-        run: pipenv install
+        run: |
+          pipenv install
+          pipenv install pytest pytest-cov
       - name: Test with pytest
         run: |
           pipenv run python -m pytest tests/ tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html

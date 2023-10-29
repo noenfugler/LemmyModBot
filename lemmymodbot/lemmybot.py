@@ -12,7 +12,7 @@ from pylemmy.models.post import Post
 from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
-from .config import Config
+from .config import Config, environment_config
 from lemmymodbot.processors.base import Processor, Content, ContentType, LemmyHandle
 from .reconnection_manager import ReconnectionDelayManager
 from .database import Database
@@ -27,9 +27,9 @@ class LemmyBot:
     def __init__(
             self,
             processors: List[Processor],
-            config: Config
+            config: Config = None
     ):
-        self.config = config
+        self.config = config if config is not None else environment_config()
         self.processors = processors
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
@@ -45,10 +45,10 @@ class LemmyBot:
             processor.setup()
 
         self.lemmy = Lemmy(
-            lemmy_url=config.instance,
-            username=config.username,
-            password=config.password,
-            user_agent="custom user agent (by " + config.owner_username + ")",
+            lemmy_url=self.config.instance,
+            username=self.config.username,
+            password=self.config.password,
+            user_agent="custom user agent (by " + self.config.owner_username + ")",
         )
         
         db_directory_name = 'data'

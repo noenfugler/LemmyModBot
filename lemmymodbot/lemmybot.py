@@ -25,9 +25,9 @@ class LemmyBot:
     performing regexp matching, user watchlist monitoring amongst other things."""
 
     def __init__(
-            self,
-            processors: List[Processor],
-            config: Config = None
+        self,
+        processors: List[Processor],
+        config: Config = None
     ):
         self.config = config if config is not None else environment_config()
         self.processors = processors

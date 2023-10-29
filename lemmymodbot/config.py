@@ -62,6 +62,6 @@ def environment_config():
             os.getenv("MATRIX_USERNAME"),
             os.getenv("MATRIX_PASSWORD"),
             os.getenv("MATRIX_ROOM")
-        ),
+        ) if os.getenv("MATRIX_INSTANCE") is not None else None,
         True
     )

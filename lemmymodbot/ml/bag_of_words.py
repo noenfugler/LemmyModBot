@@ -73,7 +73,7 @@ def build_bow_model():
 
     # train_dataset_dict = load_dataset('text', data_files='training/train.tsv')
 
-    all_data = pd.read_csv("../../training/train.tsv", sep='\t', lineterminator='\n')
+    all_data = pd.read_csv("training/train.tsv", sep='\t', lineterminator='\n')
     # train_data
 
     tokenizer = torchtext.data.utils.get_tokenizer("basic_english")

@@ -1,4 +1,4 @@
-from lemmymodbot import LemmyBot, environment_config
+from lemmymodbot import LemmyBot
 from lemmymodbot import ToxicityProcessor
 
 if __name__ == "__main__":

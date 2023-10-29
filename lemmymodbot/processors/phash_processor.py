@@ -1,9 +1,3 @@
-from io import BytesIO
-
-import requests
-from PIL import Image
-import imagehash
-
 from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult
 from lemmymodbot.processors.base import ContentType
 

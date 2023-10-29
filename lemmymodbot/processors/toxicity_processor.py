@@ -1,4 +1,3 @@
-from time import sleep
 import torch
 
 from lemmymodbot.ml import ToxicityClassifier

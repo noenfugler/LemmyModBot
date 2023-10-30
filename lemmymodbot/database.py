@@ -2,6 +2,7 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
+from sqlite3 import Error
 from typing import Optional, List
 
 
@@ -48,7 +49,7 @@ class Database:
         try:
             yield session
             session.commit()
-        except:
+        except Error:
             session.rollback()
             raise
         finally:
@@ -61,7 +62,7 @@ class Database:
             # create cursor object
             cur = conn.cursor()
             # generate list of tables with the name of the table
-            sql = f"""SELECT tbl_name FROM sqlite_master WHERE type='table'
+            sql = """SELECT tbl_name FROM sqlite_master WHERE type='table'
                 AND tbl_name=?; """
             list_of_tables = cur.execute(sql, (table_name,)).fetchall()
             if len(list_of_tables) == 0:
@@ -72,14 +73,14 @@ class Database:
         with self._session() as conn:
             try:
                 conn.execute(sql)
-            except:
+            except Error:
                 pass
 
     def in_comments_list(self, comment_id):
         """check whether this comment (comment_id) is stored in
         the database as having been previously checked"""
         with self._session() as conn:
-            result = conn.execute(f'SELECT count(id) FROM comments WHERE id=?;', (comment_id,))
+            result = conn.execute('SELECT count(id) FROM comments WHERE id=?;', (comment_id,))
             for row in result.fetchone():
                 if row != 0:
                     return True
@@ -89,7 +90,7 @@ class Database:
         """ check whether this post (id) is stored in
         the database as having been previously checked"""
         with self._session() as conn:
-            result = conn.execute(f'SELECT count(id) FROM posts WHERE id=?;', (post_id,))
+            result = conn.execute('SELECT count(id) FROM posts WHERE id=?;', (post_id,))
             for row in result.fetchone():
                 if row != 0:
                     return True
@@ -98,7 +99,7 @@ class Database:
     def add_to_comments_list(self, comment_id, results):
         """ add a comment id to the list of previously checked comments in the database """
         with self._session() as conn:
-            sql = f'''INSERT INTO comments(id, toxicity, non_toxicity) VALUES(?,?,?);'''
+            sql = '''INSERT INTO comments(id, toxicity, non_toxicity) VALUES(?,?,?);'''
             conn.execute(sql, (comment_id, results['toxicity'], results['non_toxicity']))
 
     def add_outcome_to_comment(self, comment_id, outcome):
@@ -107,20 +108,20 @@ class Database:
             # tidy up the outcome string to remove quotes which might break the SQL statement
             outcome = outcome.replace('"', '')
             outcome = outcome.replace("'", "")
-            sql = f'''UPDATE comments SET outcome=? WHERE id=?;'''
+            sql = '''UPDATE comments SET outcome=? WHERE id=?;'''
             conn.execute(sql, (outcome, comment_id))
 
     def add_outcome_to_post(self, post_id, outcome):
         """ add an outcome to a post record in the database """
 
         with self._session() as conn:
-            sql = f'''UPDATE posts SET outcome=? WHERE id=?;'''
+            sql = '''UPDATE posts SET outcome=? WHERE id=?;'''
             conn.execute(sql, (outcome, post_id))
 
     def add_to_posts_list(self, post_id, detox_name_results, detox_body_results, extras, link):
         """ add a post id to the list of previously checked posts """
         with self._session() as conn:
-            sql = f"""INSERT INTO posts(id, name_toxicity, name_non_toxicity, 
+            sql = """INSERT INTO posts(id, name_toxicity, name_non_toxicity, 
             body_toxicity, body_non_toxicity, link, phash) VALUES(?,?,?,?,?,?,?);"""
 
             conn.execute(sql, (post_id,
@@ -134,12 +135,12 @@ class Database:
 
     def add_phash(self, url: str, phash: str):
         with self._session() as conn:
-            sql = f"""INSERT INTO phash(url, phash) VALUES(?,?);"""
+            sql = """INSERT INTO phash(url, phash) VALUES(?,?);"""
             conn.execute(sql, (url, phash))
 
     def phash_exists(self, phash: str):
         with self._session() as conn:
-            sql = f"""SELECT COUNT(url) FROM phash where phash=?"""
+            sql = """SELECT COUNT(url) FROM phash where phash=?"""
             result = conn.execute(sql, (phash,))
             for row in result.fetchone():
                 if row != 0:
@@ -148,7 +149,7 @@ class Database:
 
     def url_exists(self, url: str) -> Optional[str]:
         with self._session() as conn:
-            sql = f"""SELECT phash FROM phash where url=?"""
+            sql = """SELECT phash FROM phash where url=?"""
             result = conn.execute(sql, (url,))
             for row in result.fetchall():
                 if row[0] is not None:
@@ -157,6 +158,6 @@ class Database:
 
     def get_post_links_by_phash(self, phash: str) -> List[str]:
         with self._session() as conn:
-            sql = f"""SELECT link FROM posts WHERE phash=? LIMIT 5"""
+            sql = """SELECT link FROM posts WHERE phash=? LIMIT 5"""
             result = conn.execute(sql, (phash,))
             return [row[0] for row in result.fetchall()]

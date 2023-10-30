@@ -1,13 +1,16 @@
+from io import BytesIO
 from typing import List, Any, Optional, Union
-import torchtext
 from pylemmy import Lemmy
 from pylemmy.models.comment import Comment
 from pylemmy.models.post import Post
-import re
 
-import config
-from api import LemmyModHttp
-from database import Database
+from lemmymodbot import config
+from lemmymodbot.api import LemmyModHttp
+from lemmymodbot.database import Database
+
+import requests
+from PIL import Image
+import imagehash
 
 
 class LemmyHandle:
@@ -39,6 +42,10 @@ class LemmyHandle:
             self.lemmy_http.remove_post(self.elem.post_view.post.id, reason)
         elif isinstance(self.elem, Comment):
             self.lemmy_http.remove_comment(self.elem.comment_view.comment.id, reason)
+
+    def fetch_image(self, url: str) -> (Image, str):
+        img = Image.open(BytesIO(requests.get(url).content))
+        return img, str(imagehash.phash(img))
 
 
 class ContentType:

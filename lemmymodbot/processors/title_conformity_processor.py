@@ -1,7 +1,7 @@
 import re
 
-from processors import Processor, Content, LemmyHandle, ContentResult
-from processors.base import ContentType
+from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult
+from lemmymodbot.processors.base import ContentType
 
 
 class TitleConformityProcessor(Processor):

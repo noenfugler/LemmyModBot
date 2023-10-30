@@ -1,8 +1,8 @@
-from lemmybot import LemmyBot
-from processors import ToxicityProcessor
+from lemmymodbot import LemmyBot
+from lemmymodbot import ToxicityProcessor
 
 if __name__ == "__main__":
     bot = LemmyBot([
-        ToxicityProcessor()
+        ToxicityProcessor(),
     ])
     bot.run()

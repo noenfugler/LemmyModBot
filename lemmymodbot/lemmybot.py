@@ -12,18 +12,24 @@ from pylemmy.models.post import Post
 from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
-import config
-from processors.base import Processor, Content, ContentType, LemmyHandle
-from reconnection_manager import ReconnectionDelayManager
-from database import Database
+from .config import Config, environment_config
+from lemmymodbot.processors.base import Processor, Content, ContentType, LemmyHandle
+from .reconnection_manager import ReconnectionDelayManager
+from .database import Database
 
 
 class LemmyBot:
     processors: List[Processor]
+    config: Config
     """ LemmyBot is a bot that checks Lemmy posts and comments for toxicity, as well as
     performing regexp matching, user watchlist monitoring amongst other things."""
 
-    def __init__(self, processors: List[Processor]):
+    def __init__(
+            self,
+            processors: List[Processor],
+            config: Config = None
+    ):
+        self.config = config if config is not None else environment_config()
         self.processors = processors
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
@@ -39,12 +45,12 @@ class LemmyBot:
             processor.setup()
 
         self.lemmy = Lemmy(
-            lemmy_url=config.instance,
-            username=config.username,
-            password=config.password,
-            user_agent="custom user agent (by " + config.owner_username + ")",
+            lemmy_url=self.config.instance,
+            username=self.config.username,
+            password=self.config.password,
+            user_agent="custom user agent (by " + self.config.owner_username + ")",
         )
-        
+
         db_directory_name = 'data'
         db_file_name = 'history.db'
         self.history_db = Database(db_directory_name, db_file_name)
@@ -134,13 +140,14 @@ class LemmyBot:
             if len(flags) > 0:
                 # we found something bad
                 self.logger.info('REPORT FOR COMMENT: %s', flags)
+                # noinspection PyBroadException
                 try:
-                    if not config.debug_mode:
+                    if not self.config.debug_mode:
                         elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                     self.logger.info('****************\nREPORTED COMMENT\n******************')
                     self.history_db.add_outcome_to_comment(comment_id, "Reported comment for: "
                                                            + '|'.join(flags))
-                except:
+                except Exception:
                     self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                     self.history_db.add_outcome_to_comment(comment_id, "Failed to report comment for: "
                                                            + '|'.join(flags) + " due to exception :"
@@ -148,10 +155,10 @@ class LemmyBot:
                 matrix_message = '\n\nMod bot (with L plates) : ' + ', '.join(flags)
                 matrix_message = matrix_message + '\n' + str(extras)
                 matrix_message = matrix_message + '\n' + str(elem.comment_view.comment)
-                self.send_message_to_matrix(m_server=config.matrix_server,
-                                            m_account=config.matrix_account,
-                                            m_password=config.matrix_password,
-                                            m_room_id=config.matrix_room_id,
+                self.send_message_to_matrix(m_server=self.config.matrix_config.server,
+                                            m_account=self.config.matrix_config.account,
+                                            m_password=self.config.matrix_config.password,
+                                            m_room_id=self.config.matrix_config.room_id,
                                             m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_comment(comment_id, "No report")
@@ -202,18 +209,19 @@ class LemmyBot:
                 extras_title,
                 extras_body,
                 extras,
-                f"{config.instance}/post/{elem.post_view.post.id}"
+                f"{self.config.instance}/post/{elem.post_view.post.id}"
             )
             pprint(elem)
             if len(flags) > 0:
                 self.logger.info('REPORT FOR POST: %s', flags)
+                # noinspection PyBroadException
                 try:
-                    if not config.debug_mode:
+                    if not self.config.debug_mode:
                         elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
                     self.logger.info('****************\nREPORTED POST\n******************')
                     self.history_db.add_outcome_to_post(post_id, "Reported Post for: "
                                                         + '|'.join(flags))
-                except:
+                except Exception:
                     self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
                     self.history_db.add_outcome_to_comment(post_id, "Failed to report post for: "
                                                            + '|'.join(flags) + " due to exception :"
@@ -222,10 +230,10 @@ class LemmyBot:
                 matrix_message = matrix_message + '\n' + str(extras_title)
                 matrix_message = matrix_message + '\n' + str(extras_body)
                 matrix_message = matrix_message + '\n' + str(elem.post_view.post)
-                self.send_message_to_matrix(m_server=config.matrix_server,
-                                            m_account=config.matrix_account,
-                                            m_password=config.matrix_password,
-                                            m_room_id=config.matrix_room_id,
+                self.send_message_to_matrix(m_server=self.config.matrix_config.server,
+                                            m_account=self.config.matrix_config.account,
+                                            m_password=self.config.matrix_config.password,
+                                            m_room_id=self.config.matrix_config.room_id,
                                             m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_post(post_id, "No report")
@@ -249,9 +257,10 @@ class LemmyBot:
     def run(self):
         """This is the main run loop for the bot.  It should be called after initiation of bot"""
         while True:
+            # noinspection PyBroadException
             try:
-                multi_stream = self.lemmy.multi_communities_stream(config.communities)
+                multi_stream = self.lemmy.multi_communities_stream(self.config.communities)
                 multi_stream.content_apply(self.process_content)
-            except:
+            except Exception:
                 self.logger.error("Exception raised!", exc_info=True)
                 self.mydelay.wait()

@@ -9,7 +9,7 @@ from lemmymodbot.api import LemmyModHttp
 from lemmymodbot.database import Database
 
 import requests
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import imagehash
 
 
@@ -52,8 +52,11 @@ class LemmyHandle:
     def fetch_image(self, url: str = None) -> (Image, str):
         if url is None:
             url = self._get_url()
-        img = Image.open(BytesIO(requests.get(url).content))
-        return img, str(imagehash.phash(img))
+        try:
+            img = Image.open(BytesIO(requests.get(url).content))
+            return img, str(imagehash.phash(img))
+        except UnidentifiedImageError:
+            return None, None
 
     def fetch_content(self, url: str = None) -> (bytes, Dict[str, str]):
         if url is None:

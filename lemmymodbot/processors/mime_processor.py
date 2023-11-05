@@ -17,6 +17,9 @@ class MimeProcessor(Processor):
             return ContentResult.nothing()
 
         r = requests.head(content.content)
+        if "content-type" not in r.headers:
+            return self.handle(False, False, "None")
+
         mime = r.headers["content-type"]
         components = mime.split("/")
         return self.handle(mime in self.match, self.type is None or components[0] in self.type, mime)

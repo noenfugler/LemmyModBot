@@ -1,7 +1,6 @@
 from io import BytesIO
 from typing import List, Any, Optional, Union, Dict
 
-import urllib3
 from pylemmy import Lemmy
 from pylemmy.models.comment import Comment
 from pylemmy.models.post import Post

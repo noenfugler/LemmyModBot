@@ -155,11 +155,12 @@ class LemmyBot:
                 matrix_message = '\n\nMod bot (with L plates) : ' + ', '.join(flags)
                 matrix_message = matrix_message + '\n' + str(extras)
                 matrix_message = matrix_message + '\n' + str(elem.comment_view.comment)
-                self.send_message_to_matrix(m_server=self.config.matrix_config.server,
-                                            m_account=self.config.matrix_config.account,
-                                            m_password=self.config.matrix_config.password,
-                                            m_room_id=self.config.matrix_config.room_id,
-                                            m_content=matrix_message)
+                if self.config.matrix_config is not None:
+                    self.send_message_to_matrix(m_server=self.config.matrix_config.server,
+                                                m_account=self.config.matrix_config.account,
+                                                m_password=self.config.matrix_config.password,
+                                                m_room_id=self.config.matrix_config.room_id,
+                                                m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_comment(comment_id, "No report")
 
@@ -230,11 +231,12 @@ class LemmyBot:
                 matrix_message = matrix_message + '\n' + str(extras_title)
                 matrix_message = matrix_message + '\n' + str(extras_body)
                 matrix_message = matrix_message + '\n' + str(elem.post_view.post)
-                self.send_message_to_matrix(m_server=self.config.matrix_config.server,
-                                            m_account=self.config.matrix_config.account,
-                                            m_password=self.config.matrix_config.password,
-                                            m_room_id=self.config.matrix_config.room_id,
-                                            m_content=matrix_message)
+                if self.config.matrix_config is not None:
+                    self.send_message_to_matrix(m_server=self.config.matrix_config.server,
+                                                m_account=self.config.matrix_config.account,
+                                                m_password=self.config.matrix_config.password,
+                                                m_room_id=self.config.matrix_config.room_id,
+                                                m_content=matrix_message)
             else:
                 self.history_db.add_outcome_to_post(post_id, "No report")
 

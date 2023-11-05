@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-import requests
 from magic import Magic
 
 from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult

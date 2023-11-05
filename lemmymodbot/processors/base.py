@@ -5,7 +5,7 @@ from pylemmy import Lemmy
 from pylemmy.models.comment import Comment
 from pylemmy.models.post import Post
 
-from lemmymodbot import config, Config
+from lemmymodbot import Config
 from lemmymodbot.api import LemmyModHttp
 from lemmymodbot.database import Database
 

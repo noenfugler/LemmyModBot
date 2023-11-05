@@ -1,7 +1,6 @@
-from typing import List, Any, Optional
+from typing import List, Optional
 
 import requests
-import torchtext
 
 from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult
 from lemmymodbot.processors.base import ContentType

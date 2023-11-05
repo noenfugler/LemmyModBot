@@ -104,7 +104,8 @@ class LemmyBot:
             result = processor.execute(content, LemmyHandle(
                 self.lemmy,
                 elem,
-                self.history_db
+                self.history_db,
+                self.config
             ))
             if result.flags is not None:
                 flags += result.flags

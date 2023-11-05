@@ -5,7 +5,6 @@ from pylemmy import Lemmy
 from pylemmy.models.comment import Comment
 from pylemmy.models.post import Post
 
-from lemmymodbot import Config
 from lemmymodbot.api import LemmyModHttp
 from lemmymodbot.database import Database
 
@@ -16,7 +15,7 @@ import imagehash
 
 class LemmyHandle:
 
-    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment], database: Database, config: Config):
+    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment], database: Database, config):
         self.elem = elem
         self.lemmy = lemmy
         self.lemmy_http = LemmyModHttp(lemmy)

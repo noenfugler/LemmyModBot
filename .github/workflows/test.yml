@@ -18,6 +18,7 @@ jobs:
           cache: 'pip'
       - name: Install dependencies
         run: |
+          sudo apt install libmagic-dev
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Test with pytest

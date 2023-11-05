@@ -1,5 +1,6 @@
 from io import BytesIO
-from typing import List, Any, Optional, Union
+from typing import List, Any, Optional, Union, Dict
+
 from pylemmy import Lemmy
 from pylemmy.models.comment import Comment
 from pylemmy.models.post import Post
@@ -46,6 +47,17 @@ class LemmyHandle:
     def fetch_image(self, url: str) -> (Image, str):
         img = Image.open(BytesIO(requests.get(url).content))
         return img, str(imagehash.phash(img))
+
+    def fetch_content(self, url: str) -> (bytes, Dict[str, str]):
+        cont = requests.get(
+            url,
+            allow_redirects=True,
+            headers={
+                "Accepts": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/119.0"
+            }
+        )
+        return cont.content, cont.headers
 
 
 class ContentType:

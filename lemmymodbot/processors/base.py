@@ -5,7 +5,7 @@ from pylemmy import Lemmy
 from pylemmy.models.comment import Comment
 from pylemmy.models.post import Post
 
-from lemmymodbot import config
+from lemmymodbot import config, Config
 from lemmymodbot.api import LemmyModHttp
 from lemmymodbot.database import Database
 
@@ -16,27 +16,28 @@ import imagehash
 
 class LemmyHandle:
 
-    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment], database: Database):
+    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment], database: Database, config: Config):
         self.elem = elem
         self.lemmy = lemmy
         self.lemmy_http = LemmyModHttp(lemmy)
         self.database = database
+        self.config = config
 
     def send_message_to_author(self, content: str):
-        if config.debug_mode:
+        if self.config.debug_mode:
             print(f"{content}")
             return
         actor_id = self.elem.post_view.post.creator_id if isinstance(self.elem, Post) else self.elem.comment_view
         self.lemmy_http.send_message(actor_id, f"{content}\n\nMod bot (with L plates)")
 
     def post_comment(self, content: str):
-        if config.debug_mode:
+        if self.config.debug_mode:
             print(f"{content}")
             return
         self.elem.create_comment(f"{content}\n\nMod bot (with L plates)")
 
     def remove_thing(self, reason: str):
-        if config.debug_mode:
+        if self.config.debug_mode:
             print(f"Remove {reason}")
             return
         if isinstance(self.elem, Post):
@@ -44,11 +45,21 @@ class LemmyHandle:
         elif isinstance(self.elem, Comment):
             self.lemmy_http.remove_comment(self.elem.comment_view.comment.id, reason)
 
-    def fetch_image(self, url: str) -> (Image, str):
+    def _get_url(self) -> Optional[str]:
+        if self.elem is not Post or self.elem.post_view.post.url is None:
+            return None
+        return self.elem.post_view.post.url
+
+    def fetch_image(self, url: str = None) -> (Image, str):
+        if url is None:
+            url = self._get_url()
         img = Image.open(BytesIO(requests.get(url).content))
         return img, str(imagehash.phash(img))
 
-    def fetch_content(self, url: str) -> (bytes, Dict[str, str]):
+    def fetch_content(self, url: str = None) -> (bytes, Dict[str, str]):
+        if url is None:
+            url = self._get_url()
+
         cont = requests.get(
             url,
             allow_redirects=True,

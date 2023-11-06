@@ -33,7 +33,7 @@ sympy==1.12 ; python_version >= '3.8'
 threadpoolctl==3.2.0 ; python_version >= '3.8'
 torch==2.1.0
 torchdata==0.7.0 ; python_version >= '3.8'
-torchtext==0.16.0
+torchtext==0.15.2 ; python_version >= '3.8'
 tqdm==4.66.1 ; python_version >= '3.7'
 typing-extensions==4.8.0 ; python_version >= '3.8'
 tzdata==2023.3 ; python_version >= '2'

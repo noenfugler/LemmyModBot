@@ -12,7 +12,8 @@ class TestToxicityProcessor(unittest.TestCase):
             "",
             "https://example.com/some-link",
             "",
-            ContentType.POST_LINK
+            type=ContentType.POST_LINK,
+            link_to_content="https://example.com"
         )
         handle = Mock()
 

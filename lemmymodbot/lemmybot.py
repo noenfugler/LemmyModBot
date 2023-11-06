@@ -10,7 +10,6 @@ from pprint import pprint
 from pylemmy import Lemmy
 from pylemmy.models.post import Post
 from pylemmy.models.comment import Comment
-from matrix_client.client import MatrixClient
 
 from . import MatrixFacade
 from .config import Config, environment_config

@@ -32,7 +32,8 @@ class TestPhashProcessor(unittest.TestCase):
             community="",
             actor_id="",
             content="https://example.com/some-image.jpg",
-            type=ContentType.POST_LINK
+            type=ContentType.POST_LINK,
+            link_to_content="https://example.com"
         )
         handle = Mock()
         handle.database.url_exists.return_value = None
@@ -50,7 +51,8 @@ class TestPhashProcessor(unittest.TestCase):
             community="",
             actor_id="",
             content="https://example.com/some-image.jpg",
-            type=ContentType.POST_LINK
+            type=ContentType.POST_LINK,
+            link_to_content="https://example.com"
         )
         handle = Mock()
         handle.database.url_exists.return_value = "phash_value"
@@ -69,7 +71,8 @@ class TestPhashProcessor(unittest.TestCase):
             community="",
             actor_id="",
             content="https://example.com/some-image.jpg",
-            type=ContentType.POST_LINK
+            type=ContentType.POST_LINK,
+            link_to_content="https://example.com"
         )
         handle = Mock()
         handle.database.url_exists.return_value = None

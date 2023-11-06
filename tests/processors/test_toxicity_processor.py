@@ -29,7 +29,8 @@ class TestToxicityProcessor(unittest.TestCase):
             "",
             "This is a non-toxic comment.",
             "",
-            ContentType.COMMENT
+            type=ContentType.COMMENT,
+            link_to_content="https://example.com"
         )
         handle = Mock()
 
@@ -49,7 +50,8 @@ class TestToxicityProcessor(unittest.TestCase):
             "",
             "This is a potentially toxic comment.",
             "",
-            ContentType.COMMENT
+            type=ContentType.COMMENT,
+            link_to_content="https://example.com"
         )
         handle = Mock()
 

@@ -12,7 +12,8 @@ class TestUserWatchListProcessor(unittest.TestCase):
             "",
             "https://example.com/some-link",
             "",
-            ContentType.POST_LINK
+            type=ContentType.POST_LINK,
+            link_to_content="https://example.com"
         )
         handle = Mock()
 
@@ -27,7 +28,8 @@ class TestUserWatchListProcessor(unittest.TestCase):
             "",
             "https://example.com/some-content",
             "user2",
-            ContentType.COMMENT,
+            type=ContentType.COMMENT,
+            link_to_content="https://example.com"
         )
         handle = Mock()
 
@@ -42,7 +44,8 @@ class TestUserWatchListProcessor(unittest.TestCase):
             "",
             "https://example.com/some-content",
             "user3",
-            ContentType.COMMENT
+            type=ContentType.COMMENT,
+            link_to_content="https://example.com"
         )
         handle = Mock()
 

@@ -99,51 +99,50 @@ class LemmyBot:
 
         comment_id = elem.comment_view.comment.id
         self.logger.info('COMMENT %s: %s', comment_id, elem.comment_view.comment.content)
-        if comment_id == 1313063:
-            pass
-            # Opportunity for some debugging here
-        if not self.history_db.in_comments_list(comment_id):
-            flags = []
-            extras = {}
+        if self.history_db.in_comments_list(comment_id):
+            self.logger.info('Comment Already Assessed')
+            return
 
-            content = Content(
-                elem.comment_view.community.name,
-                self.clean_content(elem.comment_view.comment.content),
-                elem.comment_view.creator.actor_id,
-                elem.comment_view.comment.path,
-                ContentType.COMMENT
+        flags = []
+        extras = {}
+
+        content = Content(
+            elem.comment_view.community.name,
+            self.clean_content(elem.comment_view.comment.content),
+            elem.comment_view.creator.actor_id,
+            elem.comment_view.comment.path,
+            ContentType.COMMENT
+        )
+
+        flags, extras = self.run_processors(content, elem, flags, extras)
+
+        self.history_db.add_to_comments_list(comment_id, extras)
+        pprint(vars(elem))
+
+        if len(flags) <= 0:
+            self.history_db.add_outcome_to_comment(comment_id, "No report")
+
+        # we found something bad
+        self.logger.info('REPORT FOR COMMENT: %s', flags)
+        # noinspection PyBroadException
+        try:
+            if not self.config.debug_mode:
+                elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
+            self.logger.info('****************\nREPORTED COMMENT\n******************')
+            self.history_db.add_outcome_to_comment(comment_id, "Reported comment for: "
+                                                   + '|'.join(flags))
+        except Exception:
+            self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
+            self.history_db.add_outcome_to_comment(comment_id, "Failed to report comment for: "
+                                                   + '|'.join(flags) + " due to exception :"
+                                                   + traceback.format_exc())
+        if self.matrix_facade is not None:
+            self.matrix_facade.send_message(
+                self.config.matrix_config.room_id,
+                self.matrix_facade.report(flags, extras, str(elem.comment_view.comment))
             )
 
-            flags, extras = self.run_processors(content, elem, flags, extras)
-
-            self.history_db.add_to_comments_list(comment_id, extras)
-            pprint(vars(elem))
-            if len(flags) > 0:
-                # we found something bad
-                self.logger.info('REPORT FOR COMMENT: %s', flags)
-                # noinspection PyBroadException
-                try:
-                    if not self.config.debug_mode:
-                        elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
-                    self.logger.info('****************\nREPORTED COMMENT\n******************')
-                    self.history_db.add_outcome_to_comment(comment_id, "Reported comment for: "
-                                                           + '|'.join(flags))
-                except Exception:
-                    self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
-                    self.history_db.add_outcome_to_comment(comment_id, "Failed to report comment for: "
-                                                           + '|'.join(flags) + " due to exception :"
-                                                           + traceback.format_exc())
-                if self.matrix_facade is not None:
-                    self.matrix_facade.send_message(
-                        self.config.matrix_config.room_id,
-                        self.matrix_facade.report(flags, extras, str(elem.comment_view.comment))
-                    )
-            else:
-                self.history_db.add_outcome_to_comment(comment_id, "No report")
-
-            sleep(5)
-        else:
-            self.logger.info('Comment Already Assessed')
+        sleep(5)
 
     def process_post(self, elem):
         """Determine if the post is new and if so run through detoxifier.  If toxic, then report.
@@ -151,74 +150,74 @@ class LemmyBot:
 
         post_id = elem.post_view.post.id
         self.logger.info('POST %s: %s', post_id, elem.post_view.post.name)
-        if not self.history_db.in_posts_list(post_id):
-            flags = []
-            extras_title = {}
-            extras_body = {}
-            extras = {}
-
-            title_content = Content(
-                elem.post_view.community.name,
-                self.clean_content(elem.post_view.post.name),
-                elem.post_view.creator.actor_id,
-                elem.post_view.post.url,
-                ContentType.POST_TITLE
-            )
-            body_content = Content(
-                elem.post_view.community.name,
-                self.clean_content(elem.post_view.post.body),
-                elem.post_view.creator.actor_id,
-                elem.post_view.post.url,
-                ContentType.POST_BODY
-            )
-            link_content = Content(
-                elem.post_view.community.name,
-                elem.post_view.post.url,
-                elem.post_view.creator.actor_id,
-                elem.post_view.post.url,
-                ContentType.POST_LINK
-            )
-
-            flags, extras_title = self.run_processors(title_content, elem, flags, extras_title)
-            if body_content.content is not None:
-                flags, extras_body = self.run_processors(body_content, elem, flags, extras_body)
-            if link_content.content is not None:
-                flags, extras = self.run_processors(link_content, elem, flags, extras)
-
-            self.history_db.add_to_posts_list(
-                post_id,
-                extras_title,
-                extras_body,
-                extras,
-                f"{self.config.instance}/post/{elem.post_view.post.id}"
-            )
-            pprint(elem)
-            if len(flags) > 0:
-                self.logger.info('REPORT FOR POST: %s', flags)
-                # noinspection PyBroadException
-                try:
-                    if not self.config.debug_mode:
-                        elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
-                    self.logger.info('****************\nREPORTED POST\n******************')
-                    self.history_db.add_outcome_to_post(post_id, "Reported Post for: "
-                                                        + '|'.join(flags))
-                except Exception:
-                    self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
-                    self.history_db.add_outcome_to_comment(post_id, "Failed to report post for: "
-                                                           + '|'.join(flags) + " due to exception :"
-                                                           + traceback.format_exc())
-                if self.matrix_facade is not None:
-                    self.matrix_facade.send_message(
-                        self.config.matrix_config.room_id,
-                        self.matrix_facade.report(flags, extras, str(elem.post_view.post))
-                    )
-            else:
-                self.history_db.add_outcome_to_post(post_id, "No report")
-
-            sleep(5)
-
-        else:
+        if self.history_db.in_posts_list(post_id):
             self.logger.info('Post Already Assessed')
+            return
+
+        flags = []
+        extras_title = {}
+        extras_body = {}
+        extras = {}
+
+        title_content = Content(
+            elem.post_view.community.name,
+            self.clean_content(elem.post_view.post.name),
+            elem.post_view.creator.actor_id,
+            elem.post_view.post.url,
+            ContentType.POST_TITLE
+        )
+        body_content = Content(
+            elem.post_view.community.name,
+            self.clean_content(elem.post_view.post.body),
+            elem.post_view.creator.actor_id,
+            elem.post_view.post.url,
+            ContentType.POST_BODY
+        )
+        link_content = Content(
+            elem.post_view.community.name,
+            elem.post_view.post.url,
+            elem.post_view.creator.actor_id,
+            elem.post_view.post.url,
+            ContentType.POST_LINK
+        )
+
+        flags, extras_title = self.run_processors(title_content, elem, flags, extras_title)
+        if body_content.content is not None:
+            flags, extras_body = self.run_processors(body_content, elem, flags, extras_body)
+        if link_content.content is not None:
+            flags, extras = self.run_processors(link_content, elem, flags, extras)
+
+        self.history_db.add_to_posts_list(
+            post_id,
+            extras_title,
+            extras_body,
+            extras,
+            f"{self.config.instance}/post/{elem.post_view.post.id}"
+        )
+        pprint(elem)
+        if len(flags) <= 0:
+            self.history_db.add_outcome_to_post(post_id, "No report")
+            return
+
+        self.logger.info('REPORT FOR POST: %s', flags)
+        # noinspection PyBroadException
+        try:
+            if not self.config.debug_mode:
+                elem.create_report(reason='Mod bot (with L plates) : ' + ', '.join(flags))
+            self.logger.info('****************\nREPORTED POST\n******************')
+            self.history_db.add_outcome_to_post(post_id, "Reported Post for: "
+                                                + '|'.join(flags))
+        except Exception:
+            self.logger.error("ERROR: UNABLE TO CREATE REPORT", exc_info=True)
+            self.history_db.add_outcome_to_comment(post_id, "Failed to report post for: "
+                                                   + '|'.join(flags) + " due to exception :"
+                                                   + traceback.format_exc())
+        if self.matrix_facade is not None:
+            self.matrix_facade.send_message(
+                self.config.matrix_config.room_id,
+                self.matrix_facade.report(flags, extras, str(elem.post_view.post))
+            )
+        sleep(5)
 
     def process_content(self, elem: Union[Post, Comment]):
         """ the main doing function, called when a new post or comment is received"""

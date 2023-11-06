@@ -470,11 +470,12 @@
         },
         "pylemmy": {
             "hashes": [
-                "sha256:45c2013d7f16fba05131b94712bf2d544bc9a26761bfea465cefe7c4c420bf1c",
-                "sha256:7743eb8ee72300cac4f623b8babc8df85ae984df5092d06dc99ea513152fd29f"
+                "sha256:4dd615d375af619ba19ba73866f31bbdc6de1f19df53786493e885dbe6fae03d",
+                "sha256:eea0a8b1896f827c2f6ca12d0ea6c958c35d88353b7ad197cfefae760d0680e2"
             ],
             "index": "pypi",
-            "version": "==0.0.8"
+            "markers": "python_version >= '3.7'",
+            "version": "==0.0.6"
         },
         "python-dateutil": {
             "hashes": [

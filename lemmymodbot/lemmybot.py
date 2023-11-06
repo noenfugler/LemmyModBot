@@ -59,10 +59,10 @@ class LemmyBot:
         self.logger.info("Bot starting!")
         self.mydelay = ReconnectionDelayManager(logger=self.logger)
         self.matrix_facade = MatrixFacade(
-            config.matrix_config.server,
-            config.matrix_config.account,
-            config.matrix_config.password
-        ) if config.matrix_config is not None else None
+            self.config.matrix_config.server,
+            self.config.matrix_config.account,
+            self.config.matrix_config.password
+        ) if self.config is not None and self.config.matrix_config is not None else None
 
     def clean_content(self, content: str):
         if content is None:

@@ -1,0 +1,20 @@
+version: '2'
+
+services:
+  lemmy-bot:
+    image: ghcr.io/benmmclean/lemmymodbot:latest
+    container_name: lemmy-bot
+    environment:
+      - LEMMY_USERNAME=
+      - LEMMY_PASSWORD=
+      - LEMMY_INSTANCE=
+      - LEMMY_OWNER_USERNAME=
+      - LEMMY_COMMUNITIES=
+      - MATRIX_INSTANCE=
+      - MATRIX_USERNAME=
+      - MATRIX_PASSWORD=
+      - MATRIX_ROOM=
+    volumes:
+      - lemmy-mod-data:/app/data
+volumes:
+  lemmy-mod-data:

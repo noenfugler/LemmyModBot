@@ -12,6 +12,7 @@ from pylemmy.models.post import Post
 from pylemmy.models.comment import Comment
 from matrix_client.client import MatrixClient
 
+from . import MatrixFacade
 from .config import Config, environment_config
 from lemmymodbot.processors.base import Processor, Content, ContentType, LemmyHandle
 from .reconnection_manager import ReconnectionDelayManager
@@ -21,6 +22,7 @@ from .database import Database
 class LemmyBot:
     processors: List[Processor]
     config: Config
+    matrix_facade: MatrixFacade
     """ LemmyBot is a bot that checks Lemmy posts and comments for toxicity, as well as
     performing regexp matching, user watchlist monitoring amongst other things."""
 
@@ -56,35 +58,11 @@ class LemmyBot:
         self.history_db = Database(db_directory_name, db_file_name)
         self.logger.info("Bot starting!")
         self.mydelay = ReconnectionDelayManager(logger=self.logger)
-
-    def send_message_to_matrix(self, m_server: str, m_account: str, m_password: str, m_room_id: str, m_content: str):
-        """ Send a message to a matrix room
-        parameters:
-        server : string - The name of the server.  e.g. "https://matrix.example.org"
-        account : string - The name of the account e.g. "@alice:example.org"
-        password : string - The password for the account e.g. "my-secret-password"
-        room_id : string - The id of the room e.g. "!my-fave-room:example.org"
-        content : string - The content of the message e.g. "Hello World!"
-        """
-        if m_server is None:
-            return
-
-        # Create a Matrix client instance
-        client = MatrixClient(m_server)
-
-        # Log in
-        # client.login_with_password(username=m_account, password=m_password)
-        client.login(username=m_account, password=m_password, sync=True)
-
-        # Get a room instance
-        room = client.join_room(m_room_id)
-
-        # Send a message synchronously.  Returns a result if needed later
-        room.send_text(text=m_content)
-
-        # Wait for the response before continuing
-        # response.wait_for_response()
-        client.logout()
+        self.matrix_facade = MatrixFacade(
+            config.matrix_config.server,
+            config.matrix_config.account,
+            config.matrix_config.password
+        ) if config.matrix_config is not None else None
 
     def clean_content(self, content: str):
         if content is None:
@@ -105,7 +83,8 @@ class LemmyBot:
                 self.lemmy,
                 elem,
                 self.history_db,
-                self.config
+                self.config,
+                self.matrix_facade
             ))
             if result.flags is not None:
                 flags += result.flags
@@ -131,6 +110,7 @@ class LemmyBot:
                 elem.comment_view.community.name,
                 self.clean_content(elem.comment_view.comment.content),
                 elem.comment_view.creator.actor_id,
+                elem.comment_view.comment.path,
                 ContentType.COMMENT
             )
 
@@ -153,15 +133,11 @@ class LemmyBot:
                     self.history_db.add_outcome_to_comment(comment_id, "Failed to report comment for: "
                                                            + '|'.join(flags) + " due to exception :"
                                                            + traceback.format_exc())
-                matrix_message = '\n\nMod bot (with L plates) : ' + ', '.join(flags)
-                matrix_message = matrix_message + '\n' + str(extras)
-                matrix_message = matrix_message + '\n' + str(elem.comment_view.comment)
-                if self.config.matrix_config is not None:
-                    self.send_message_to_matrix(m_server=self.config.matrix_config.server,
-                                                m_account=self.config.matrix_config.account,
-                                                m_password=self.config.matrix_config.password,
-                                                m_room_id=self.config.matrix_config.room_id,
-                                                m_content=matrix_message)
+                if self.matrix_facade is not None:
+                    self.matrix_facade.send_message(
+                        self.config.matrix_config.room_id,
+                        self.matrix_facade.report(flags, extras, str(elem.comment_view.comment))
+                    )
             else:
                 self.history_db.add_outcome_to_comment(comment_id, "No report")
 
@@ -185,18 +161,21 @@ class LemmyBot:
                 elem.post_view.community.name,
                 self.clean_content(elem.post_view.post.name),
                 elem.post_view.creator.actor_id,
+                elem.post_view.post.url,
                 ContentType.POST_TITLE
             )
             body_content = Content(
                 elem.post_view.community.name,
                 self.clean_content(elem.post_view.post.body),
                 elem.post_view.creator.actor_id,
+                elem.post_view.post.url,
                 ContentType.POST_BODY
             )
             link_content = Content(
                 elem.post_view.community.name,
                 elem.post_view.post.url,
                 elem.post_view.creator.actor_id,
+                elem.post_view.post.url,
                 ContentType.POST_LINK
             )
 
@@ -228,16 +207,11 @@ class LemmyBot:
                     self.history_db.add_outcome_to_comment(post_id, "Failed to report post for: "
                                                            + '|'.join(flags) + " due to exception :"
                                                            + traceback.format_exc())
-                matrix_message = '\n\nMod bot (with L plates) : ' + ', '.join(flags)
-                matrix_message = matrix_message + '\n' + str(extras_title)
-                matrix_message = matrix_message + '\n' + str(extras_body)
-                matrix_message = matrix_message + '\n' + str(elem.post_view.post)
-                if self.config.matrix_config is not None:
-                    self.send_message_to_matrix(m_server=self.config.matrix_config.server,
-                                                m_account=self.config.matrix_config.account,
-                                                m_password=self.config.matrix_config.password,
-                                                m_room_id=self.config.matrix_config.room_id,
-                                                m_content=matrix_message)
+                if self.matrix_facade is not None:
+                    self.matrix_facade.send_message(
+                        self.config.matrix_config.room_id,
+                        self.matrix_facade.report(flags, extras, str(elem.post_view.post))
+                    )
             else:
                 self.history_db.add_outcome_to_post(post_id, "No report")
 

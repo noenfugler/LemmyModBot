@@ -19,6 +19,7 @@ requests = "2.31.0"
 loguru = "0.7.2"
 aiostream = "0.4.5"
 python-magic = "*"
+pykson = "*"
 
 [dev-packages]
 

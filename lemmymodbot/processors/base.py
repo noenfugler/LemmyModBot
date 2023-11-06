@@ -15,12 +15,13 @@ import imagehash
 
 class LemmyHandle:
 
-    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment], database: Database, config):
+    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment], database: Database, config, matrix_facade):
         self.elem = elem
         self.lemmy = lemmy
         self.lemmy_http = LemmyModHttp(lemmy)
         self.database = database
         self.config = config
+        self.matrix_facade = matrix_facade
 
     def send_message_to_author(self, content: str):
         if self.config.debug_mode:
@@ -72,6 +73,14 @@ class LemmyHandle:
         )
         return cont.content, cont.headers
 
+    def send_message(self, message):
+        if self.matrix_facade is None:
+            return
+        self.matrix_facade.send_message(
+            self.config.matrix_config.room_id,
+            message + "\n\nMod bot (with L plates)"
+        )
+
 
 class ContentType:
     POST_TITLE = 0
@@ -84,22 +93,26 @@ class Content:
     community: str
     content: str
     actor_id: str
+    link_to_content: str
     type: ContentType
 
-    def __init__(self, community: str, content: str, actor_id: str, type: ContentType):
+    def __init__(self, community: str, content: str, actor_id: str, link_to_content: str, type: ContentType):
         self.community = community
         self.content = content
         self.actor_id = actor_id
+        self.link_to_content = link_to_content
         self.type = type
 
 
 class ContentResult:
     flags: List[str]
     extras: Optional[Any]
+    was_deleted: bool
 
-    def __init__(self, flags: List[str], extras: Optional[Any]):
+    def __init__(self, flags: List[str], extras: Optional[Any], was_deleted: bool = False):
         self.flags = flags
         self.extras = extras
+        self.was_deleted = was_deleted
 
     @staticmethod
     def nothing():

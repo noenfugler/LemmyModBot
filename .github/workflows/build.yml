@@ -122,6 +122,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Find and Replace
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "{{VERSION_PLACEHOLDER}}"
+          replace: "${{ needs.version.outputs.version }}"
+          regex: false
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip

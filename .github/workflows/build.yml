@@ -132,7 +132,7 @@ jobs:
         uses: jacobtomlinson/gha-find-replace@v3
         with:
           find: "{{PACKAGE_NAME_PLACEHOLDER}}"
-          replace: "${{ vars.PIPY_PACKAGE_NAME }}"
+          replace: "${{ vars.PYPI_PACKAGE_NAME }}"
           regex: false
       - name: Install dependencies
         run: |

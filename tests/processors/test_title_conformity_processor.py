@@ -16,7 +16,8 @@ class TestTitleConformityProcessor(unittest.TestCase):
             "",
             "",
             "",
-            ContentType.POST_LINK
+            type=ContentType.POST_LINK,
+            link_to_content="https://example.com"
         ), self.mock_handle)
 
         self.mock_handle.post_comment.assert_not_called()

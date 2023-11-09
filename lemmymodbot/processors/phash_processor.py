@@ -13,6 +13,9 @@ class PhashProcessor(Processor):
             return self._warn_user(handle, phash)
 
         phash = handle.fetch_image(content.content)[1]
+        if phash is None:
+            return ContentResult.nothing()
+        
         if handle.database.phash_exists(phash):
             handle.database.add_phash(content.content, phash)
             return self._warn_user(handle, phash)

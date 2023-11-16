@@ -1,9 +1,9 @@
 from io import BytesIO
 from typing import List, Any, Optional, Union, Dict
 
-from pylemmy import Lemmy
-from pylemmy.models.comment import Comment
-from pylemmy.models.post import Post
+from plemmy import LemmyHttp
+from plemmy.views import PostView, CommentView
+
 
 from lemmymodbot.api import LemmyModHttp
 from lemmymodbot.database import Database
@@ -15,7 +15,7 @@ import imagehash
 
 class LemmyHandle:
 
-    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment], database: Database, config, matrix_facade):
+    def __init__(self, lemmy: LemmyHttp, elem: Union[PostView, CommentView], database: Database, config, matrix_facade):
         self.elem = elem
         self.lemmy = lemmy
         self.lemmy_http = LemmyModHttp(lemmy)
@@ -27,28 +27,42 @@ class LemmyHandle:
         if self.config.debug_mode:
             print(f"{content}")
             return
-        actor_id = self.elem.post_view.post.creator_id if isinstance(self.elem, Post) else self.elem.comment_view
+
+        actor_id = self.elem.creator.actor_id
+
         self.lemmy_http.send_message(actor_id, f"{content}\n\nMod bot (with L plates)")
 
     def post_comment(self, content: str):
         if self.config.debug_mode:
             print(f"{content}")
             return
-        self.elem.create_comment(f"{content}\n\nMod bot (with L plates)")
+
+        self.lemmy.create_comment(
+            f"{content}\n\nMod bot (with L plates)",
+            self.elem.post.id
+        )
 
     def remove_thing(self, reason: str):
         if self.config.debug_mode:
             print(f"Remove {reason}")
             return
-        if isinstance(self.elem, Post):
-            self.lemmy_http.remove_post(self.elem.post_view.post.id, reason)
-        elif isinstance(self.elem, Comment):
-            self.lemmy_http.remove_comment(self.elem.comment_view.comment.id, reason)
+        if isinstance(self.elem, PostView):
+            self.lemmy.remove_post(
+                self.elem.post.id,
+                True,
+                reason
+            )
+        elif isinstance(self.elem, CommentView):
+            self.lemmy.remove_comment(
+                self.elem.comment.id,
+                True,
+                reason
+            )
 
     def _get_url(self) -> Optional[str]:
-        if self.elem is not Post or self.elem.post_view.post.url is None:
+        if not(isinstance(self.elem, PostView)) or self.elem.post.url is None:
             return None
-        return self.elem.post_view.post.url
+        return self.elem.post.url
 
     def fetch_image(self, url: str = None) -> (Image, str):
         if url is None:

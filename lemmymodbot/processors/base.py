@@ -5,7 +5,6 @@ from plemmy import LemmyHttp
 from plemmy.views import PostView, CommentView
 
 
-from lemmymodbot.api import LemmyModHttp
 from lemmymodbot.database import Database
 
 import requests
@@ -18,7 +17,7 @@ class LemmyHandle:
     def __init__(self, lemmy: LemmyHttp, elem: Union[PostView, CommentView], database: Database, config, matrix_facade):
         self.elem = elem
         self.lemmy = lemmy
-        self.lemmy_http = LemmyModHttp(lemmy)
+        self.lemmy_http = lemmy
         self.database = database
         self.config = config
         self.matrix_facade = matrix_facade

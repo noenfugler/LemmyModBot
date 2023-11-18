@@ -31,14 +31,14 @@ class Paginator:
 
             print(f"Scanning page {current_page}")
 
-            posts = self.get_page_response(current_page, limit, order).posts
+            content_list = self.get_page_response(current_page, limit, order)
 
-            for post in posts:
-                post = post.post
-                print(f"Processing {post.name} (url = {post.url})")
-                self.task(post)
+            for content in content_list:
+                post_v = content.post
+                print(f"Processing {post_v.name} (url = {post_v.url})")
+                self.task(content)
 
-            if len(posts) < limit:
+            if len(content_list) < limit:
                 break
 
             current_page += 1
@@ -54,7 +54,7 @@ class PostPaginator(Paginator):
                 limit=limit,
                 sort=sort
             )
-        )
+        ).posts
 
 
 class CommentPaginator(Paginator):
@@ -67,4 +67,4 @@ class CommentPaginator(Paginator):
                 limit=limit,
                 sort=sort
             )
-        )
+        ).comments

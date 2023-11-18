@@ -244,14 +244,14 @@ class LemmyBot:
                     post_paginator = PostPaginator(
                         lemmy=self.lemmy,
                         community_name=community_name,
-                        task=lambda x: None
+                        task=self.process_content
                     )
                     post_paginator.paginate()
 
                     comment_paginator = CommentPaginator(
                         lemmy=self.lemmy,
                         community_name=community_name,
-                        task=lambda x: None
+                        task=self.process_content
                     )
                     comment_paginator.paginate()
 

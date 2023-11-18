@@ -37,7 +37,6 @@ class Paginator:
                 post = post.post
                 print(f"Processing {post.name} (url = {post.url})")
                 self.task(post)
-                #self.process_content(post)
 
             if len(posts) < limit:
                 break

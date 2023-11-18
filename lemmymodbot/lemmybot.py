@@ -9,10 +9,12 @@ from pprint import pprint
 
 from plemmy import LemmyHttp
 from plemmy.views import PostView, CommentView
+from plemmy.responses import GetPostsResponse, GetCommunityResponse, GetCommentsResponse
 
 from . import MatrixFacade
 from .config import Config, environment_config
 from lemmymodbot.processors.base import Processor, Content, ContentType, LemmyHandle
+from .pagenator import Pagenator, PostPagenator, CommentPagenator
 from .reconnection_manager import ReconnectionDelayManager
 from .database import Database
 
@@ -233,11 +235,39 @@ class LemmyBot:
 
     def run(self):
         """This is the main run loop for the bot.  It should be called after initiation of bot"""
+
         while True:
             # noinspection PyBroadException
             try:
-                multi_stream = self.lemmy.multi_communities_stream(self.config.communities)
-                multi_stream.content_apply(self.process_content)
+
+                for community_name in self.config.communities:
+
+                    community_id = GetCommunityResponse(self.lemmy.get_community(name=community_name)).community_view.community.id
+                    current_page = 1
+
+                    post_pagenator = PostPagenator(
+                        lemmy=self.lemmy,
+                        community_name=community_name
+                    )
+
+                    comment_pagenator = CommentPagenator(
+                        lemmy=self.lemmy,
+                        community_name=community_name
+                    )
+
+                    while True:
+
+                        comment_response = GetCommentsResponse(
+                            self.lemmy.get_comments(
+                                community_id=community_id,
+                                community_name=community_id,
+                                page=current_page,
+                                limit=10,
+                                max_depth=1,
+                                sort="Old",
+                            )
+                        )
+
             except Exception:
                 self.logger.error("Exception raised!", exc_info=True)
                 self.mydelay.wait()

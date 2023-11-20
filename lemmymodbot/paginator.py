@@ -1,50 +1,58 @@
 import math
 from abc import abstractmethod
-from enum import Enum
+
 from typing import Any, Callable
 
 from plemmy import LemmyHttp
 from plemmy.responses import GetPostsResponse, GetCommentsResponse, GetCommunityResponse
 
+from lemmymodbot.data import MonitorPersistence, MonitorPersistencePost, MonitorPersistenceComment
+
 
 class Paginator:
-
     lemmy: LemmyHttp
+    persistence: MonitorPersistence
     community: str
     community_id: int
-    task: Callable
 
-    def __init__(self, lemmy: LemmyHttp, community_name: str, task: Callable):
+    def __init__(self, lemmy: LemmyHttp, community_name: str):
         self.lemmy = lemmy
         self.community = community_name
-        self.community_id = GetCommunityResponse(self.lemmy.get_community(name=self.community)).community_view.community.id
-        self.task = task
+        self.community_id = GetCommunityResponse(
+            self.lemmy.get_community(name=self.community)).community_view.community.id
 
     @abstractmethod
     def get_page_response(self, page: int, limit: int, sort: str):
         pass
 
-    def paginate(self, starting_page=1, limit=10, order="Old"):
-        current_page = starting_page
+    def paginate(self, task: Callable, starting_page: int = None, limit: int = 10):
+        current_page = starting_page if starting_page is not None else self.persistence.get_current_page(self.community)
 
         while True:
 
             print(f"Scanning page {current_page}")
 
-            content_list = self.get_page_response(current_page, limit, order)
+            content_list = self.get_page_response(current_page, limit, "Old")
 
             for content in content_list:
                 post_v = content.post
                 print(f"Processing {post_v.name} (url = {post_v.url})")
-                self.task(content)
+                task(content)
 
             if len(content_list) < limit:
                 break
 
             current_page += 1
 
+        self.persistence.set_current_page(self.community, current_page)
+
 
 class PostPaginator(Paginator):
+
+    def __init__(self, lemmy: LemmyHttp, community_name: str,
+                 monitor_persistence: MonitorPersistence = MonitorPersistencePost()):
+        super().__init__(lemmy, community_name)
+        self.persistence = monitor_persistence
 
     def get_page_response(self, page: int, limit: int, sort: str):
         return GetPostsResponse(
@@ -58,6 +66,11 @@ class PostPaginator(Paginator):
 
 
 class CommentPaginator(Paginator):
+
+    def __init__(self, lemmy: LemmyHttp, community_name: str,
+                 monitor_persistence: MonitorPersistence = MonitorPersistenceComment()):
+        super().__init__(lemmy, community_name)
+        self.persistence = monitor_persistence
 
     def get_page_response(self, page: int, limit: int, sort: str):
         return GetCommentsResponse(

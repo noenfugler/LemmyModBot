@@ -21,6 +21,8 @@ python-magic = "*"
 pykson = "*"
 libmagic = "*"
 plemmy = "*"
+sqlalchemy = "*"
+alembic = "*"
 
 [dev-packages]
 

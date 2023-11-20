@@ -243,17 +243,15 @@ class LemmyBot:
 
                     post_paginator = PostPaginator(
                         lemmy=self.lemmy,
-                        community_name=community_name,
-                        task=self.process_content
+                        community_name=community_name
                     )
-                    post_paginator.paginate()
+                    post_paginator.paginate(self.process_content)
 
                     comment_paginator = CommentPaginator(
                         lemmy=self.lemmy,
-                        community_name=community_name,
-                        task=self.process_content
+                        community_name=community_name
                     )
-                    comment_paginator.paginate()
+                    comment_paginator.paginate(self.process_content)
 
 
             except Exception:

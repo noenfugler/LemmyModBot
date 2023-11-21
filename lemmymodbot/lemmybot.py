@@ -5,6 +5,7 @@ from time import sleep
 from typing import Union, List
 import logging
 import sys
+import os
 from pprint import pprint
 
 from plemmy import LemmyHttp
@@ -13,6 +14,7 @@ from plemmy.views import PostView, CommentView
 from . import MatrixFacade
 from .config import Config, environment_config
 from lemmymodbot.processors.base import Processor, Content, ContentType, LemmyHandle
+from .data.base import Base, engine
 from .paginator import PostPaginator, CommentPaginator
 from .reconnection_manager import ReconnectionDelayManager
 from .database import Database
@@ -34,6 +36,11 @@ class LemmyBot:
         self.processors = processors
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
+
+        if not os.path.isdir('data/'):
+            os.mkdir("data/")
+
+        Base.metadata.create_all(engine)
 
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(logging.DEBUG)

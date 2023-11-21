@@ -32,6 +32,3 @@ class CurrentPage(Base):
     community_name = Column(VARCHAR(30), primary_key=True)
     post_page = Column(INTEGER)
     comment_page = Column(INTEGER)
-
-
-Base.metadata.create_all(engine)

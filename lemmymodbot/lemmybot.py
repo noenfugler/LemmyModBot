@@ -9,12 +9,11 @@ from pprint import pprint
 
 from plemmy import LemmyHttp
 from plemmy.views import PostView, CommentView
-from plemmy.responses import GetPostsResponse, GetCommunityResponse, GetCommentsResponse
 
 from . import MatrixFacade
 from .config import Config, environment_config
 from lemmymodbot.processors.base import Processor, Content, ContentType, LemmyHandle
-from .paginator import Paginator, PostPaginator, CommentPaginator
+from .paginator import PostPaginator, CommentPaginator
 from .reconnection_manager import ReconnectionDelayManager
 from .database import Database
 

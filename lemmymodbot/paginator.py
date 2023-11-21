@@ -1,7 +1,6 @@
-import math
 from abc import abstractmethod
 
-from typing import Any, Callable
+from typing import Callable
 
 from plemmy import LemmyHttp
 from plemmy.responses import GetPostsResponse, GetCommentsResponse, GetCommunityResponse

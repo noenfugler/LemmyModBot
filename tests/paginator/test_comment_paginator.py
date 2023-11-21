@@ -3,8 +3,6 @@ from unittest.mock import Mock
 
 import requests
 
-from lemmymodbot.paginator import CommentPaginator
-
 
 class TestCommentPaginator(unittest.TestCase):
     def setUp(self):
@@ -17,7 +15,6 @@ class TestCommentPaginator(unittest.TestCase):
             response = requests.Response()
             response._content = f.read()
             self.mock_lemmy.get_community.return_value = response
-
 
     def test_get_page_response_called_correct_number_of_times(self):
         pass

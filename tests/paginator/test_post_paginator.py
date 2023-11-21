@@ -3,9 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
-import requests
-
-from lemmymodbot.paginator import CommentPaginator, PostPaginator
+from lemmymodbot.paginator import PostPaginator
 
 
 class TestPostPaginator(unittest.TestCase):

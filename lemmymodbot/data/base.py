@@ -1,10 +1,9 @@
 from contextlib import contextmanager
-from typing import Optional, Generator, ContextManager
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, VARCHAR, TEXT, ForeignKey, create_engine, Engine
+from sqlalchemy import Column, VARCHAR, create_engine, Engine
 from sqlalchemy.dialects.mysql import INTEGER
-from sqlalchemy.orm import Mapped, mapped_column, relationship, sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session
 
 Base = declarative_base()
 metadata = Base.metadata

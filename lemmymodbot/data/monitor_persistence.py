@@ -1,6 +1,4 @@
-from typing import Optional
-
-from sqlalchemy import update, select, Result, and_
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from lemmymodbot.data.base import CurrentPage, session_scope

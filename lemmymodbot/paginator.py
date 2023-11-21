@@ -5,7 +5,7 @@ from typing import Callable
 from plemmy import LemmyHttp
 from plemmy.responses import GetPostsResponse, GetCommentsResponse, GetCommunityResponse
 
-from lemmymodbot.data import MonitorPersistence, MonitorPersistencePost, MonitorPersistenceComment
+from lemmymodbot.data import MonitorPersistence, PostMonitorPersistence, CommentMonitorPersistence
 
 
 class Paginator:
@@ -51,7 +51,7 @@ class Paginator:
 class PostPaginator(Paginator):
 
     def __init__(self, lemmy: LemmyHttp, community_name: str,
-                 monitor_persistence: MonitorPersistence = MonitorPersistencePost()):
+                 monitor_persistence: MonitorPersistence = PostMonitorPersistence()):
         super().__init__(lemmy, community_name)
         self.persistence = monitor_persistence
 
@@ -71,7 +71,7 @@ class PostPaginator(Paginator):
 class CommentPaginator(Paginator):
 
     def __init__(self, lemmy: LemmyHttp, community_name: str,
-                 monitor_persistence: MonitorPersistence = MonitorPersistenceComment()):
+                 monitor_persistence: MonitorPersistence = CommentMonitorPersistence()):
         super().__init__(lemmy, community_name)
         self.persistence = monitor_persistence
 

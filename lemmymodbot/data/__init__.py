@@ -1,2 +1,2 @@
 from .base import session_scope
-from .monitor_persistence import MonitorPersistence, MonitorPersistencePost, MonitorPersistenceComment
+from .monitor_persistence import MonitorPersistence, PostMonitorPersistence, CommentMonitorPersistence

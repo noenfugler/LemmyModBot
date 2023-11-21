@@ -17,7 +17,7 @@ class MonitorPersistence:
         pass
 
 
-class MonitorPersistencePost(MonitorPersistence):
+class PostMonitorPersistence(MonitorPersistence):
 
     def get_current_page(self, community_name: str) -> int:
         with session_scope() as session:
@@ -39,7 +39,7 @@ class MonitorPersistencePost(MonitorPersistence):
                 current.post_page = page_number
 
 
-class MonitorPersistenceComment(MonitorPersistence):
+class CommentMonitorPersistence(MonitorPersistence):
 
     def get_current_page(self, community_name: str) -> int:
         with session_scope() as session:

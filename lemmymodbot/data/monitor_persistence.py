@@ -8,7 +8,7 @@ from lemmymodbot.data.base import CurrentPage, session_scope
 
 class MonitorPersistence:
 
-    def __get_page_entry(self, community_name: str, session: Session) -> CurrentPage:
+    def _get_page_entry(self, community_name: str, session: Session) -> CurrentPage:
         return (session.execute(select(CurrentPage).filter(CurrentPage.community_name == community_name))
                 .scalar_one_or_none())
 
@@ -23,14 +23,14 @@ class MonitorPersistencePost(MonitorPersistence):
 
     def get_current_page(self, community_name: str) -> int:
         with session_scope() as session:
-            result = self.__get_page_entry(community_name, session)
+            result = self._get_page_entry(community_name, session)
             if result is None:
                 return 1
             return result.post_page
 
     def set_current_page(self, community_name: str, page_number: int):
         with session_scope() as session:
-            current = self.__get_page_entry(community_name, session)
+            current = self._get_page_entry(community_name, session)
             if current is None:
                 session.add(CurrentPage(
                     community_name=community_name,
@@ -45,14 +45,14 @@ class MonitorPersistenceComment(MonitorPersistence):
 
     def get_current_page(self, community_name: str) -> int:
         with session_scope() as session:
-            result = self.__get_page_entry(community_name, session)
+            result = self._get_page_entry(community_name, session)
             if result is None:
                 return 1
             return result.comment_page
 
     def set_current_page(self, community_name: str, page_number: int):
         with session_scope() as session:
-            current = self.__get_page_entry(community_name, session)
+            current = self._get_page_entry(community_name, session)
             if current is None:
                 session.add(CurrentPage(
                     community_name=community_name,

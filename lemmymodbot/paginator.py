@@ -21,6 +21,8 @@ class Paginator:
         self.community_id = GetCommunityResponse(
             self.lemmy.get_community(name=self.community)).community_view.community.id
 
+        # print(self.lemmy.get_community(name=self.community).json())
+
     @abstractmethod
     def get_page_response(self, page: int, limit: int, sort: str):
         pass
@@ -55,13 +57,15 @@ class PostPaginator(Paginator):
         self.persistence = monitor_persistence
 
     def get_page_response(self, page: int, limit: int, sort: str):
+        posts = self.lemmy.get_posts(
+            community_id=self.community_id,
+            page=page,
+            limit=limit,
+            sort=sort
+        )
+
         return GetPostsResponse(
-            self.lemmy.get_posts(
-                community_id=self.community_id,
-                page=page,
-                limit=limit,
-                sort=sort
-            )
+            posts
         ).posts
 
 

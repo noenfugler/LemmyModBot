@@ -15,6 +15,6 @@ services:
       - MATRIX_PASSWORD=
       - MATRIX_ROOM=
     volumes:
-      - lemmy-mod-data:/app/data
+      - lemmy-mod-fixtures:/app/fixtures
 volumes:
   lemmy-mod-data:

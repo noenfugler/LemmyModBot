@@ -23,6 +23,7 @@ libmagic = "*"
 plemmy = "*"
 sqlalchemy = "*"
 alembic = "*"
+pytest = "*"
 
 [dev-packages]
 

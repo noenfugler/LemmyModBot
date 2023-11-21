@@ -17,9 +17,15 @@ class TestPostPaginator(unittest.TestCase):
             self.mock_lemmy.get_community.return_value = response
 
     def test_get_page_response_called_correct_number_of_times(self):
+
+        mock_persistence = Mock()
+        mock_persistence.get_current_page.return_value = 1
+        mock_persistence.set_current_page.method()
+
         post_paginator = PostPaginator(
             lemmy=self.mock_lemmy,
-            community_name="196"
+            community_name="196",
+            monitor_persistence=mock_persistence
         )
 
         post_ten = json.loads(Path('tests/fixtures/get_posts_response_ok.json').read_text())

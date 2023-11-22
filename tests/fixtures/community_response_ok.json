@@ -1,0 +1,140 @@
+{
+  "community_view": {
+    "community": {
+      "id": 70513,
+      "name": "196",
+      "title": "196",
+      "description": "",
+      "removed": false,
+      "published": "2023-07-24T18:03:26.956729",
+      "updated": "2023-10-29T10:01:49.682680",
+      "deleted": false,
+      "nsfw": true,
+      "actor_id": "https://lemmy.blahaj.zone/c/196",
+      "local": true,
+      "icon": "https://lemmy.blahaj.zone/pictrs/image/3iRDkTvAaP.jpg",
+      "hidden": false,
+      "posting_restricted_to_mods": false,
+      "instance_id": 171
+    },
+    "subscribed": "NotSubscribed",
+    "blocked": false,
+    "counts": {
+      "id": 7828,
+      "community_id": 70513,
+      "subscribers": 195,
+      "posts": 187,
+      "comments": 85,
+      "published": "2023-07-24T18:03:26.956729",
+      "users_active_day": 2,
+      "users_active_week": 3,
+      "users_active_month": 13,
+      "users_active_half_year": 29,
+      "hot_rank": 0
+    }
+  },
+  "moderators": [
+    {
+      "community": {
+        "id": 70513,
+        "name": "196",
+        "title": "196",
+        "description": "A community for explicit trans furry images.\n\nRules:\n1. List the artist in the title\n2. No gore or extreme fetishes\n3. All characters must be and appear over 18\n4. No ferals\n5. Transphobia or any other kind of bigotry (including as the content of images) will not be tolerated\n6. Be respectful\n\nIcon by [Or-Fi-S](https://www.furaffinity.net/user/or-fi-s)",
+        "removed": false,
+        "published": "2023-07-24T18:03:26.956729",
+        "updated": "2023-10-29T10:01:49.682680",
+        "deleted": false,
+        "nsfw": true,
+        "actor_id": "https://lemmy.blahaj.zone/c/196",
+        "local": true,
+        "icon": "https://lemmy.blahaj.zone/pictrs/image/3iRDkTvAaP.jpg",
+        "hidden": false,
+        "posting_restricted_to_mods": false,
+        "instance_id": 171
+      },
+      "moderator": {
+        "id": 656288,
+        "name": "EmilyIsTrans",
+        "display_name": "Emily",
+        "avatar": "https://lemmy.blahaj.zone/pictrs/image/G4bSAAmVnT.jpg",
+        "banned": false,
+        "published": "2023-07-01T12:42:49.335058",
+        "actor_id": "https://lemmy.blahaj.zone/u/EmilyIsTrans",
+        "bio": "I have dimensions. A furry trans-woman who likes books? Never seen before.",
+        "local": true,
+        "banner": "https://lemmy.blahaj.zone/pictrs/image/pw9vZAOORg.jpg",
+        "deleted": false,
+        "matrix_user_id": "@emily:mtrx.nz",
+        "admin": false,
+        "bot_account": false,
+        "instance_id": 171
+      }
+    },
+    {
+      "community": {
+        "id": 70513,
+        "name": "196",
+        "title": "196",
+        "description": "",
+        "removed": false,
+        "published": "2023-07-24T18:03:26.956729",
+        "updated": "2023-10-29T10:01:49.682680",
+        "deleted": false,
+        "nsfw": true,
+        "actor_id": "https://lemmy.blahaj.zone/c/196",
+        "local": true,
+        "icon": "https://lemmy.blahaj.zone/pictrs/image/3iRDkTvAaP.jpg",
+        "hidden": false,
+        "posting_restricted_to_mods": false,
+        "instance_id": 171
+      },
+      "moderator": {
+        "id": 655048,
+        "name": "MetaDoor",
+        "banned": false,
+        "published": "2023-07-01T11:52:53.191591",
+        "actor_id": "https://lemmy.blahaj.zone/u/MetaDoor",
+        "local": true,
+        "deleted": false,
+        "admin": false,
+        "bot_account": false,
+        "instance_id": 171
+      }
+    },
+    {
+      "community": {
+        "id": 70513,
+        "name": "196",
+        "title": "196",
+        "description": "196",
+        "removed": false,
+        "published": "2023-07-24T18:03:26.956729",
+        "updated": "2023-10-29T10:01:49.682680",
+        "deleted": false,
+        "nsfw": true,
+        "actor_id": "https://lemmy.blahaj.zone/c/196",
+        "local": true,
+        "icon": "https://lemmy.blahaj.zone/pictrs/image/3iRDkTvAaP.jpg",
+        "hidden": false,
+        "posting_restricted_to_mods": false,
+        "instance_id": 171
+      },
+      "moderator": {
+        "id": 3548625,
+        "name": "Xenia",
+        "display_name": "Xenia [bot]",
+        "avatar": "https://lemmy.blahaj.zone/pictrs/image/eda81ccc-bea9-42dc-a557-d3d7116587d5.jpeg",
+        "banned": false,
+        "published": "2023-09-25T07:06:09.582934",
+        "actor_id": "https://lemmy.blahaj.zone/u/Xenia",
+        "bio": "Avatar from https://twitter.com/merryhime_/status/1651334447826976770\n\nI am a bot (beep boop) and managed by emilyistrans@lemmy.blahaj.zone",
+        "local": true,
+        "deleted": false,
+        "admin": false,
+        "bot_account": true,
+        "instance_id": 171
+      }
+    }
+  ],
+  "discussion_languages": []
+}

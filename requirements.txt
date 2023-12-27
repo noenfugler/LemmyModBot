@@ -1,6 +1,8 @@
 -i https://pypi.org/simple
-aiostream==0.4.5
-certifi==2023.7.22 ; python_version >= '3.6'
+aiostream==0.5.2
+alembic==1.12.1
+annotated-types==0.6.0 ; python_version >= '3.8'
+certifi==2023.11.17 ; python_version >= '3.6'
 charset-normalizer==3.3.2 ; python_full_version >= '3.7.0'
 filelock==3.13.1 ; python_version >= '3.8'
 fsspec==2023.10.0 ; python_version >= '3.8'
@@ -9,31 +11,35 @@ imagehash==4.3.1
 jdatetime==4.1.1 ; python_version >= '3.7'
 jinja2==3.1.2 ; python_version >= '3.7'
 joblib==1.3.2 ; python_version >= '3.7'
+libmagic==1.0
 loguru==0.7.2
+mako==1.3.0 ; python_version >= '3.8'
 markupsafe==2.1.3 ; python_version >= '3.7'
 matrix-client==0.4.0
 mpmath==1.3.0
 mypy-extensions==1.0.0
 networkx==3.2.1 ; python_version >= '3.9'
-numpy==1.26.1
-pandas==2.1.2
+numpy==1.26.2
+pandas==2.1.3
 pillow==10.1.0 ; python_version >= '3.8'
-pydantic==1.10.13
+plemmy==0.3.11
+pydantic==2.5.1
+pydantic-core==2.14.3 ; python_version >= '3.7'
 pykson==0.9.9.8.17
-pylemmy==0.0.6 ; python_version >= '3.7'
 python-dateutil==2.8.2 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
 python-magic==0.4.27
 pytz==2023.3.post1
-pywavelets==1.4.1 ; python_version >= '3.8'
+pywavelets==1.5.0 ; python_version >= '3.9'
 requests==2.31.0
 scikit-learn==1.3.2
 scipy==1.11.3 ; python_version < '3.13' and python_version >= '3.9'
 six==1.16.0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
+sqlalchemy==2.0.23
 sympy==1.12 ; python_version >= '3.8'
 threadpoolctl==3.2.0 ; python_version >= '3.8'
-torch==2.0.1 ; python_full_version >= '3.8.0'
-torchdata==0.6.1 ; python_version >= '3.8'
-torchtext==0.15.2 ; python_version >= '3.8'
+torch==2.1.1
+torchdata==0.7.1 ; python_version >= '3.8'
+torchtext==0.16.1
 tqdm==4.66.1 ; python_version >= '3.7'
 typing-extensions==4.8.0 ; python_version >= '3.8'
 tzdata==2023.3 ; python_version >= '2'

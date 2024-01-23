@@ -6,7 +6,8 @@ name = "pypi"
 [packages]
 numpy = "*"
 pandas = "*"
-torch = "*"
+torch = "2.1.1"
+torchdata = "0.7.1"
 torchtext = "0.16.2"
 mypy-extensions = "*"
 matrix-client = "*"
@@ -28,4 +29,4 @@ pytest = "*"
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.9"

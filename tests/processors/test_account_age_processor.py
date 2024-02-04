@@ -13,8 +13,7 @@ class TestAccountAgeProcessor(unittest.TestCase):
 
     def test_account_age_greater_than_minimum(self):
         # Set up the processor with a minimum age of 100
-        processor = AccountAgeProcessor()
-        processor.minimum_age = 100
+        processor = AccountAgeProcessor(100)
 
         # Mock account details to have an age greater than the minimum
         self.mock_handle.get_account_details.return_value.age = 150
@@ -31,8 +30,7 @@ class TestAccountAgeProcessor(unittest.TestCase):
 
     def test_account_age_less_than_minimum(self):
         # Set up the processor with a minimum age of 100
-        processor = AccountAgeProcessor()
-        processor.minimum_age = 100
+        processor = AccountAgeProcessor(100)
 
         # Mock account details to have an age less than the minimum
         self.mock_handle.get_account_details.return_value.age = 50

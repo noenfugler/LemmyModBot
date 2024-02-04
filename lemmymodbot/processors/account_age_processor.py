@@ -9,10 +9,13 @@ class AccountAgeProcessor(Processor):
     # Minimum account age in seconds
     minimum_age: int
 
+    def __init__(self, minimum_age: int) -> None:
+        self.minimum_age = minimum_age
+
     def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
         if content.type != ContentType.POST_TITLE and content.type != ContentType.COMMENT:
             return ContentResult.nothing()
-        
+
         if handle.get_account_details().age >= self.minimum_age:
             return ContentResult.nothing()
 

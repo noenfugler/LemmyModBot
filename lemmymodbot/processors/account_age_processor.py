@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from format_duration import format_duration
 
+from lemmymodbot import ContentType
 from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult
 
 
@@ -10,6 +11,9 @@ class AccountAgeProcessor(Processor):
     minimum_age: int
 
     def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
+        if content.type != ContentType.POST_TITLE or content.type != ContentType.COMMENT:
+            return ContentResult.nothing()
+        
         if handle.get_account_details().age >= self.minimum_age:
             return ContentResult.nothing()
 

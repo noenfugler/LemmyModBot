@@ -2,8 +2,7 @@ from datetime import timedelta
 
 from format_duration import format_duration
 
-from lemmymodbot import ContentType
-from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult
+from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult, ContentType
 
 
 class AccountAgeProcessor(Processor):

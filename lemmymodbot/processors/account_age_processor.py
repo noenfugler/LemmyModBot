@@ -10,7 +10,7 @@ class AccountAgeProcessor(Processor):
     minimum_age: int
 
     def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
-        if content.type != ContentType.POST_TITLE or content.type != ContentType.COMMENT:
+        if content.type != ContentType.POST_TITLE and content.type != ContentType.COMMENT:
             return ContentResult.nothing()
         
         if handle.get_account_details().age >= self.minimum_age:

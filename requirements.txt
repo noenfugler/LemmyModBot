@@ -2,9 +2,11 @@
 aiostream==0.5.2
 alembic==1.13.1
 annotated-types==0.6.0 ; python_version >= '3.8'
-certifi==2023.11.17 ; python_version >= '3.6'
+certifi==2024.2.2 ; python_version >= '3.6'
 charset-normalizer==3.3.2 ; python_full_version >= '3.7.0'
+exceptiongroup==1.2.0 ; python_version < '3.11'
 filelock==3.13.1 ; python_version >= '3.8'
+format-duration==0.0.5
 idna==3.6 ; python_version >= '3.5'
 imagehash==4.3.1
 iniconfig==2.0.0 ; python_version >= '3.7'
@@ -13,8 +15,8 @@ jinja2==3.1.3 ; python_version >= '3.7'
 joblib==1.3.2 ; python_version >= '3.7'
 libmagic==1.0
 loguru==0.7.2
-mako==1.3.1 ; python_version >= '3.8'
-markupsafe==2.1.4 ; python_version >= '3.7'
+mako==1.3.2 ; python_version >= '3.8'
+markupsafe==2.1.5 ; python_version >= '3.7'
 matrix-client==0.4.0
 mpmath==1.3.0
 mypy-extensions==1.0.0
@@ -24,14 +26,14 @@ packaging==23.2 ; python_version >= '3.7'
 pandas==2.2.0
 pillow==10.2.0 ; python_version >= '3.8'
 plemmy==0.4.1
-pluggy==1.3.0 ; python_version >= '3.8'
-pydantic==2.5.3
-pydantic-core==2.14.6 ; python_version >= '3.7'
+pluggy==1.4.0 ; python_version >= '3.8'
+pydantic==2.6.0
+pydantic-core==2.16.1 ; python_version >= '3.8'
 pykson==0.9.9.8.17
-pytest==7.4.4
+pytest==8.0.0
 python-dateutil==2.8.2 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
 python-magic==0.4.27
-pytz==2023.3.post1
+pytz==2024.1
 pywavelets==1.5.0 ; python_version >= '3.9'
 requests==2.31.0
 scikit-learn==1.4.0
@@ -40,6 +42,7 @@ six==1.16.0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 
 sqlalchemy==2.0.25
 sympy==1.12 ; python_version >= '3.8'
 threadpoolctl==3.2.0 ; python_version >= '3.8'
+tomli==2.0.1 ; python_version < '3.11'
 torch==2.0.1
 torchdata==0.6.1
 torchtext==0.15.2

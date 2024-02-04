@@ -1,7 +1,11 @@
+from dataclasses import dataclass
+from datetime import datetime
 from io import BytesIO
 from typing import List, Any, Optional, Union, Dict
 
+from dateutil import parser
 from plemmy import LemmyHttp
+from plemmy.objects import Person
 from plemmy.views import PostView, CommentView
 
 
@@ -12,10 +16,16 @@ from PIL import Image, UnidentifiedImageError
 import imagehash
 
 
+@dataclass
+class AccountDetails:
+    age: float
+
+
 class LemmyHandle:
 
-    def __init__(self, lemmy: LemmyHttp, elem: Union[PostView, CommentView], database: Database, config, matrix_facade):
+    def __init__(self, lemmy: LemmyHttp, elem: Union[PostView, CommentView], person: Person, database: Database, config, matrix_facade):
         self.elem = elem
+        self.person = person
         self.lemmy = lemmy
         self.lemmy_http = lemmy
         self.database = database
@@ -92,6 +102,11 @@ class LemmyHandle:
         self.matrix_facade.send_message(
             self.config.matrix_config.room_id,
             message + "\n\nMod bot (with L plates)"
+        )
+
+    def get_account_details(self) -> AccountDetails:
+        return AccountDetails(
+            (datetime.utcnow() - parser.parse(self.person.published)).total_seconds()
         )
 
 

@@ -261,7 +261,7 @@ class LemmyBot:
                     )
                     comment_paginator.paginate(self.process_content)
 
-
+                sleep(60)
             except Exception:
                 self.logger.error("Exception raised!", exc_info=True)
                 self.mydelay.wait()

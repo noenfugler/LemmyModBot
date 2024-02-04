@@ -125,6 +125,7 @@ class LemmyBot:
 
         if len(flags) <= 0:
             self.history_db.add_outcome_to_comment(comment_id, "No report")
+            return
 
         # we found something bad
         self.logger.info('REPORT FOR COMMENT: %s', flags)

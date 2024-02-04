@@ -85,6 +85,7 @@ class LemmyBot:
             result = processor.execute(content, LemmyHandle(
                 self.lemmy,
                 elem,
+                elem.creator,
                 self.history_db,
                 self.config,
                 self.matrix_facade

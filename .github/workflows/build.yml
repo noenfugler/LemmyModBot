@@ -128,8 +128,13 @@ jobs:
           find: "plemmy = \"*\""
           replace: "plemmy = \"0.3.11\""
           regex: false
-      - name: Update requirements
-        run: apt update && apt install -yqq wget git gnupg curl python3-pip libmagic-dev && pip3 install pipenv && pipenv lock && pipenv requirements > requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - name: Install pipenv
+        run: pip install pipenv
       - id: repo
         uses: ASzc/change-string-case-action@v5
         with:

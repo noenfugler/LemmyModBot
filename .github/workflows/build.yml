@@ -135,6 +135,7 @@ jobs:
           cache: 'pip'
       - name: Install pipenv
         run: pip install pipenv
+      - run: pipenv lock && pipenv requirements > requirements.txt
       - id: repo
         uses: ASzc/change-string-case-action@v5
         with:

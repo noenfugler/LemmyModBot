@@ -38,8 +38,7 @@ class LemmyHandle:
             return
 
         actor_id = self.elem.creator.actor_id
-
-        self.lemmy_http.send_message(actor_id, f"{content}\n\nMod bot (with L plates)")
+        self.lemmy_http.create_private_message(f"{content}\n\nMod bot (with L plates)", actor_id)
 
     def post_comment(self, content: str):
         if self.config.debug_mode:

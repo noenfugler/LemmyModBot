@@ -10,7 +10,18 @@ A Docker image is provided for the purposes of easily running the moderation bot
 environment. To run a bot with just the toxicity detection an example `docker-compose` file has been [provided](docker-compose.example.yml).
 To set up further modules (as detailed further below), mount a replacement `main.py` file at `/app/main.py`.
 
-The bot can also be run un-containerised, either by cloning the repo, or by (in the future) using the pip package.
+The bot can also be run un-containerised, either by cloning the repo, or by using the pip package.
+
+### ⚠️ Compatibility ⚠️
+Version 0.19.0+ of Lemmy incompatibally updates the method through which clients interact with the API. By default, this project
+will work with these newer versions. If your community is hosted on an older instance, the following steps are necessary for the
+bot to function:
+
+If you are using docker, ensure your container uses versions prefixed with `compat-0.18-`.
+
+If you are using the package hosted on pypi, *explicitly* declare your plemmy version as `0.3.11`.
+
+If you are running from source, update the plemmy version in Pipfile.
 
 ## Modules
 Different aspects of moderation are divided into "Processors". These scan and report content for a single kind of 

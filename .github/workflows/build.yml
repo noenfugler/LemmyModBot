@@ -109,7 +109,7 @@ jobs:
             ${{ steps.meta.outputs.tags }}
             ghcr.io/${{ steps.repo.outputs.lowercase }}:latest
             ghcr.io/${{ steps.repo.outputs.lowercase }}:${{ needs.version.outputs.version }}
-  docker-0-18:
+  docker-compat-0-18:
     runs-on: ubuntu-latest
     needs: version
     permissions:
@@ -153,8 +153,8 @@ jobs:
           platforms: linux/amd64, linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ steps.repo.outputs.lowercase }}:0.18-latest
-            ghcr.io/${{ steps.repo.outputs.lowercase }}:0.18-${{ needs.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.lowercase }}:compat-0.18-latest
+            ghcr.io/${{ steps.repo.outputs.lowercase }}:compat-0.18-${{ needs.version.outputs.version }}
   pypi:
     runs-on: ubuntu-latest
     needs: [version, release]

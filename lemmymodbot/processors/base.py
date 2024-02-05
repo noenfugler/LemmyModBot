@@ -48,7 +48,8 @@ class LemmyHandle:
 
         self.lemmy.create_comment(
             f"{content}\n\nMod bot (with L plates)",
-            self.elem.post.id
+            self.elem.post.id,
+            parent_id=self.elem.comment.id if isinstance(self.elem, CommentView) else None
         )
 
     def remove_thing(self, reason: str):

@@ -125,8 +125,8 @@ class Database:
             body_toxicity, body_non_toxicity, link, phash) VALUES(?,?,?,?,?,?,?);"""
 
             conn.execute(sql, (post_id,
-                               detox_name_results['toxicity'],
-                               detox_name_results['non_toxicity'],
+                               detox_name_results['toxicity'] if 'toxicity' in detox_name_results else 0,
+                               detox_name_results['non_toxicity'] if 'non_toxicity' in detox_name_results else 1,
                                detox_body_results['toxicity'] if 'toxicity' in detox_body_results else 0,
                                detox_body_results['non_toxicity'] if 'non_toxicity' in detox_body_results else 1,
                                link,

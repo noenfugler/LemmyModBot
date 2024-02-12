@@ -100,7 +100,7 @@ class Database:
         """ add a comment id to the list of previously checked comments in the database """
         with self._session() as conn:
             sql = '''INSERT INTO comments(id, toxicity, non_toxicity) VALUES(?,?,?);'''
-            conn.execute(sql, (comment_id, results['toxicity'], results['non_toxicity']))
+            conn.execute(sql, (comment_id, results['toxicity'] if 'toxicity' in results else 0, results['non_toxicity'] if 'non_toxicity' in results else 1))
 
     def add_outcome_to_comment(self, comment_id, outcome):
         """ add an outcome to a comment record in the database """

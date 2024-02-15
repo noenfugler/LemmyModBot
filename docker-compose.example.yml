@@ -10,10 +10,6 @@ services:
       - LEMMY_INSTANCE=
       - LEMMY_OWNER_USERNAME=
       - LEMMY_COMMUNITIES=
-      - MATRIX_INSTANCE=
-      - MATRIX_USERNAME=
-      - MATRIX_PASSWORD=
-      - MATRIX_ROOM=
     volumes:
       - lemmy-mod-data:/app/data
 volumes:

@@ -22,6 +22,7 @@ class AccountDetails:
 
 
 class LemmyHandle:
+    content_footer = "\n\nMod bot (with L plates)"
 
     def __init__(self, lemmy: LemmyHttp, elem: Union[PostView, CommentView], person: Person, database: Database, config, matrix_facade):
         self.elem = elem
@@ -38,7 +39,7 @@ class LemmyHandle:
             return
 
         actor_id = self.elem.creator.actor_id
-        self.lemmy_http.create_private_message(f"{content}\n\nMod bot (with L plates)", actor_id)
+        self.lemmy_http.create_private_message(f"{content}{self.content_footer}", actor_id)
 
     def post_comment(self, content: str):
         if self.config.debug_mode:
@@ -46,7 +47,7 @@ class LemmyHandle:
             return
 
         self.lemmy.create_comment(
-            f"{content}\n\nMod bot (with L plates)",
+            f"{content}{self.content_footer}",
             self.elem.post.id,
             parent_id=self.elem.comment.id if isinstance(self.elem, CommentView) else None
         )
@@ -101,7 +102,7 @@ class LemmyHandle:
             return
         self.matrix_facade.send_message(
             self.config.matrix_config.room_id,
-            message + "\n\nMod bot (with L plates)"
+            f"{message}{self.content_footer}"
         )
 
     def get_account_details(self) -> AccountDetails:

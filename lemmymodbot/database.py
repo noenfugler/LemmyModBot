@@ -42,6 +42,7 @@ class Database:
             PRIMARY KEY("url")
         );'''
         self.check_table_exists('phash', create_phash_table_sql)
+        self.update_table('''ALTER TABLE "phash" ADD COLUMN "spam" INTEGER''')
 
     @contextmanager
     def _session(self):
@@ -138,10 +139,10 @@ class Database:
             sql = """INSERT INTO phash(url, phash) VALUES(?,?);"""
             conn.execute(sql, (url, phash))
 
-    def phash_exists(self, phash: str):
+    def phash_exists(self, phash: str, spam: bool = False):
         with self._session() as conn:
-            sql = """SELECT COUNT(url) FROM phash where phash=?"""
-            result = conn.execute(sql, (phash,))
+            sql = """SELECT COUNT(url) FROM phash where phash=? AND spam=?"""
+            result = conn.execute(sql, (phash,spam))
             for row in result.fetchone():
                 if row != 0:
                     return True

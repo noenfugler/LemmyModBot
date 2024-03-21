@@ -26,6 +26,7 @@ plemmy = "*"
 sqlalchemy = "*"
 alembic = "*"
 pytest = "*"
+mistletoe = "*"
 
 [dev-packages]
 

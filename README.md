@@ -34,4 +34,4 @@ violation, and can be configured individually. Currently, there are eight differ
 * **UserProcessor** - Automatically reports content posted by a listed user.
 * **ToxicityProcessor** - Assesses the toxicity of any post/comment and automatically files a report if it is above a specified threshold.
 * **PhotoDNAProcessor** *(untested)* - Given a [Microsoft PhotoDNA API Key](https://www.microsoft.com/en-us/photodna), this processor checks posts for Child Sexual Abuse Material (CSAM). If any violating content is found, the post is automatically deleted. Reports of this nature are sent to the provided Matrix server. This processor is untested as I am unable to obtain an API key.
- 
+* **SpamImageProcessor** - Given a collection of phashes (which can be calculated using the included tool `phash_tool.py`), will scan through all posts and comments in the community and delete any containing the blacklisted images.

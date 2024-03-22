@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
-from lemmymodbot.processors import Content, ContentResult
+from lemmymodbot.processors import Content
 from lemmymodbot.processors.spam_image_processor import SpamImageProcessor, ContentType
 
 

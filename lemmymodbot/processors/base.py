@@ -101,7 +101,7 @@ class LemmyHandle:
 
     def get_account_details(self) -> AccountDetails:
         return AccountDetails(
-            (datetime.utcnow() - parser.parse(self.person.published)).total_seconds()
+            (datetime.now() - parser.parse(self.person.published)).total_seconds()
         )
 
 

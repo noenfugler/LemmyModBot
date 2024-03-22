@@ -1,5 +1,22 @@
-# LemmyModBot
-[![Build](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/build.yml/badge.svg)](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/build.yml) [![Unit Test](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/test.yml/badge.svg)](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/test.yml)
+<p align="center">
+    <a href="#" rel="noopener">
+        <img width=150px src="assets/bot-logo.svg" ></img>
+    </a>
+    <h1 align="center">
+        Lemmy Mod Bot
+    </h1>
+    <p align="center">
+        A web API designed to efficiently manage and schedule volunteer firefighters.
+    </p>
+</p>
+<div align="center">
+
+[![Build](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/build.yml/badge.svg)](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/build.yml) 
+[![Unit Test](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/test.yml/badge.svg)](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/test.yml)
+
+</div>
+
+
 
 A Lemmy bot written in Python that allows you to automatically moderate communities from toxicity, duplicate posts, and CSAM content.  
 

@@ -1,4 +1,4 @@
-
+from typing import List
 
 from lemmymodbot.processors import Processor, Content, LemmyHandle, ContentResult
 from lemmymodbot.processors.base import ContentType
@@ -6,6 +6,10 @@ from lemmymodbot.helpers import extract_links_from_markdown
 
 
 class SpamImageProcessor(Processor):
+    hashes: List[str]
+
+    def __init__(self, hashes: List[str]):
+        self.hashes = hashes
 
     def execute(self, content: Content, handle: LemmyHandle) -> ContentResult:
         result = False
@@ -30,7 +34,4 @@ class SpamImageProcessor(Processor):
         if phash is None:
             return False
 
-        if handle.database.phash_exists(phash, True):
-            return True
-
-        return False
+        return phash in self.hashes

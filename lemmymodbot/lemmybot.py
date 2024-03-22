@@ -11,7 +11,7 @@ from pprint import pprint
 from plemmy import LemmyHttp
 from plemmy.views import PostView, CommentView
 
-from . import MatrixFacade, SpamImageBootstrapper
+from . import MatrixFacade
 from .config import Config, environment_config
 from lemmymodbot.processors.base import Processor, Content, ContentType, LemmyHandle
 from .data.base import Base, engine
@@ -19,6 +19,7 @@ from .paginator import PostPaginator, CommentPaginator
 from .processors.spam_image_processor import SpamImageProcessor
 from .reconnection_manager import ReconnectionDelayManager
 from .database import Database
+from .helpers import SpamImageBootstrapper
 
 
 class LemmyBot:

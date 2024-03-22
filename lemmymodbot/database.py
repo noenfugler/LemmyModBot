@@ -149,6 +149,9 @@ class Database:
         return False
 
     def url_exists(self, url: str) -> Optional[str]:
+        if url == "":
+            return None
+
         with self._session() as conn:
             sql = """SELECT phash FROM phash where url=?"""
             result = conn.execute(sql, (url,))

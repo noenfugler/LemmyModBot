@@ -1,4 +1,6 @@
-from typing import List
+from typing import List, Callable
+
+from PIL.Image import Image
 
 from lemmymodbot.database import Database
 from lemmymodbot.helpers import fetch_image
@@ -6,9 +8,11 @@ from lemmymodbot.helpers import fetch_image
 
 class SpamImageBootstrapper:
     database: Database
+    fetch_image: Callable[[str], tuple[Image, str]]
 
-    def __init__(self, database: Database):
+    def __init__(self, database: Database, fetch_image: Callable[[str], tuple[Image, str]] = fetch_image):
         self.database = database
+        self.fetch_image = fetch_image
 
     def setup(self, images: List[str]):
         for image in images:
@@ -20,9 +24,9 @@ class SpamImageBootstrapper:
                     if self.database.phash_exists(phash, True):
                         continue
 
-            phash = fetch_image(image)[1] if is_url else image
+            phash = self.fetch_image(image)[1] if is_url else image
             if phash is not None:
                 if self.database.phash_exists(phash, True):
                     continue
 
-                self.database.add_phash(image, phash, True)
+                self.database.add_phash(image if is_url else "", phash, True)

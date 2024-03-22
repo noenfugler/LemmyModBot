@@ -12,13 +12,15 @@ class SpamImageBootstrapper:
 
     def setup(self, images: List[str]):
         for image in images:
-            # Check if url has already been added
-            phash = self.database.url_exists(image)
-            if phash is not None:
-                if self.database.phash_exists(phash, True):
-                    continue
+            is_url = image.startswith("http")
+            if is_url:
+                # Check if url has already been added
+                phash = self.database.url_exists(image)
+                if phash is not None:
+                    if self.database.phash_exists(phash, True):
+                        continue
 
-            phash = fetch_image(image)[1]
+            phash = fetch_image(image)[1] if is_url else image
             if phash is not None:
                 if self.database.phash_exists(phash, True):
                     continue

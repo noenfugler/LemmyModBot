@@ -16,8 +16,10 @@ from .config import Config, environment_config
 from lemmymodbot.processors.base import Processor, Content, ContentType, LemmyHandle
 from .data.base import Base, engine
 from .paginator import PostPaginator, CommentPaginator
+from .processors.spam_image_processor import SpamImageProcessor
 from .reconnection_manager import ReconnectionDelayManager
 from .database import Database
+from .helpers import SpamImageBootstrapper
 
 
 class LemmyBot:
@@ -59,6 +61,13 @@ class LemmyBot:
         db_directory_name = 'data'
         db_file_name = 'history.db'
         self.history_db = Database(db_directory_name, db_file_name)
+
+        if any(isinstance(p, SpamImageProcessor) for p in self.processors):
+            self.logger.info("Bootstrapping spam image processors")
+            bootstrapper = SpamImageBootstrapper(self.history_db)
+            bootstrapper.setup(self.config.spam_images)
+            self.logger.info("Bootstrapping spam image complete")
+
         self.logger.info("Bot starting!")
         self.mydelay = ReconnectionDelayManager(logger=self.logger)
         self.matrix_facade = MatrixFacade(

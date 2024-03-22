@@ -18,36 +18,37 @@ loguru==0.7.2
 mako==1.3.2 ; python_version >= '3.8'
 markupsafe==2.1.5 ; python_version >= '3.7'
 matrix-client==0.4.0
+mistletoe==1.3.0
 mpmath==1.3.0
 mypy-extensions==1.0.0
 networkx==3.2.1 ; python_version >= '3.9'
-numpy==1.26.3
-packaging==23.2 ; python_version >= '3.7'
-pandas==2.2.0
+numpy==1.26.4
+packaging==24.0 ; python_version >= '3.7'
+pandas==2.2.1
 pillow==10.2.0 ; python_version >= '3.8'
-plemmy==0.4.1
+plemmy==0.4.2
 pluggy==1.4.0 ; python_version >= '3.8'
-pydantic==2.6.0
-pydantic-core==2.16.1 ; python_version >= '3.8'
+pydantic==2.6.4
+pydantic-core==2.16.3 ; python_version >= '3.8'
 pykson==0.9.9.8.17
-pytest==8.0.0
-python-dateutil==2.8.2 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
+pytest==8.1.1
+python-dateutil==2.9.0.post0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
 python-magic==0.4.27
 pytz==2024.1
 pywavelets==1.5.0 ; python_version >= '3.9'
 requests==2.31.0
-scikit-learn==1.4.0
+scikit-learn==1.4.1.post1
 scipy==1.12.0 ; python_version >= '3.9'
 six==1.16.0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-sqlalchemy==2.0.25
+sqlalchemy==2.0.28
 sympy==1.12 ; python_version >= '3.8'
-threadpoolctl==3.2.0 ; python_version >= '3.8'
+threadpoolctl==3.4.0 ; python_version >= '3.8'
 tomli==2.0.1 ; python_version < '3.11'
 torch==2.0.1
 torchdata==0.6.1
 torchtext==0.15.2
-tqdm==4.66.1 ; python_version >= '3.7'
+tqdm==4.66.2 ; python_version >= '3.7'
 typing-extensions==4.9.0 ; python_version >= '3.8'
-tzdata==2023.4 ; python_version >= '2'
+tzdata==2024.1 ; python_version >= '2'
 urllib3==1.26.18 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
-wheel==0.42.0
+wheel==0.43.0

@@ -42,6 +42,7 @@ class Database:
             PRIMARY KEY("url")
         );'''
         self.check_table_exists('phash', create_phash_table_sql)
+        self.update_table('''ALTER TABLE "phash" ADD COLUMN "spam" INTEGER''')
 
     @contextmanager
     def _session(self):
@@ -133,21 +134,24 @@ class Database:
                                extras['phash'] if 'phash' in extras else None
                                ))
 
-    def add_phash(self, url: str, phash: str):
+    def add_phash(self, url: str, phash: str, spam: bool = False):
         with self._session() as conn:
-            sql = """INSERT INTO phash(url, phash) VALUES(?,?);"""
-            conn.execute(sql, (url, phash))
+            sql = """INSERT INTO phash(url, phash, spam) VALUES(?,?,?);"""
+            conn.execute(sql, (url, phash, spam))
 
-    def phash_exists(self, phash: str):
+    def phash_exists(self, phash: str, spam: bool = False):
         with self._session() as conn:
-            sql = """SELECT COUNT(url) FROM phash where phash=?"""
-            result = conn.execute(sql, (phash,))
+            sql = """SELECT COUNT(url) FROM phash where phash=? AND spam=?"""
+            result = conn.execute(sql, (phash,spam))
             for row in result.fetchone():
                 if row != 0:
                     return True
         return False
 
     def url_exists(self, url: str) -> Optional[str]:
+        if url == "":
+            return None
+
         with self._session() as conn:
             sql = """SELECT phash FROM phash where url=?"""
             result = conn.execute(sql, (url,))

@@ -10,6 +10,7 @@
 
 [![Build](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/build.yml/badge.svg)](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/build.yml) 
 [![Unit Test](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/test.yml/badge.svg)](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/test.yml)
+[![Lint](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/lint.yml/badge.svg)](https://github.com/BenMMcLean/LemmyModBot/actions/workflows/lint.yml)
 
 </div>
 

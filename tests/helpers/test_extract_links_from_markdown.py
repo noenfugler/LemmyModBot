@@ -1,6 +1,4 @@
 import unittest
-from unittest.mock import Mock
-import torch
 from lemmymodbot import extract_links_from_markdown
 
 

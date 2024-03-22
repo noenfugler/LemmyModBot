@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import Mock
-import torch
 from lemmymodbot.helpers import SpamImageBootstrapper
 from lemmymodbot.database import Database
 

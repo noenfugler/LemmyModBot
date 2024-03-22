@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime
-from io import BytesIO
 from typing import List, Any, Optional, Union, Dict
 
 from dateutil import parser
@@ -12,8 +11,7 @@ from lemmymodbot.helpers import fetch_image
 from lemmymodbot.database import Database
 
 import requests
-from PIL import Image, UnidentifiedImageError
-import imagehash
+from PIL import Image
 
 
 @dataclass

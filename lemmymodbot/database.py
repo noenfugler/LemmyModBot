@@ -134,10 +134,10 @@ class Database:
                                extras['phash'] if 'phash' in extras else None
                                ))
 
-    def add_phash(self, url: str, phash: str):
+    def add_phash(self, url: str, phash: str, spam: bool = False):
         with self._session() as conn:
-            sql = """INSERT INTO phash(url, phash) VALUES(?,?);"""
-            conn.execute(sql, (url, phash))
+            sql = """INSERT INTO phash(url, phash, spam) VALUES(?,?,?);"""
+            conn.execute(sql, (url, phash, spam))
 
     def phash_exists(self, phash: str, spam: bool = False):
         with self._session() as conn:

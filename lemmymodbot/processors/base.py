@@ -8,7 +8,7 @@ from plemmy import LemmyHttp
 from plemmy.objects import Person
 from plemmy.views import PostView, CommentView
 
-
+from lemmymodbot.helpers import fetch_image
 from lemmymodbot.database import Database
 
 import requests
@@ -77,11 +77,7 @@ class LemmyHandle:
     def fetch_image(self, url: str = None) -> (Image, str):
         if url is None:
             url = self._get_url()
-        try:
-            img = Image.open(BytesIO(requests.get(url).content))
-            return img, str(imagehash.phash(img))
-        except UnidentifiedImageError:
-            return None, None
+        return fetch_image(url)
 
     def fetch_content(self, url: str = None) -> (bytes, Dict[str, str]):
         if url is None:

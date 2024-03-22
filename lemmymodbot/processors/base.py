@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List, Any, Optional, Union, Dict
 
 from dateutil import parser
+from dateutil.tz import UTC
 from plemmy import LemmyHttp
 from plemmy.objects import Person
 from plemmy.views import PostView, CommentView
@@ -101,7 +102,7 @@ class LemmyHandle:
 
     def get_account_details(self) -> AccountDetails:
         return AccountDetails(
-            (datetime.now() - parser.parse(self.person.published)).total_seconds()
+            (datetime.utcnow().replace(tzinfo=UTC) - parser.parse(self.person.published)).total_seconds()
         )
 
 

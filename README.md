@@ -5,9 +5,6 @@
     <h1 align="center">
         Lemmy Mod Bot
     </h1>
-    <p align="center">
-        A web API designed to efficiently manage and schedule volunteer firefighters.
-    </p>
 </p>
 <div align="center">
 

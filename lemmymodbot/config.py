@@ -30,7 +30,6 @@ class Config:
     communities: List[str]
     debug_mode: bool
     matrix_config: MatrixConfig
-    spam_images: List[str]
 
     def __init__(
             self,
@@ -40,7 +39,6 @@ class Config:
             owner_username: str,
             communities: List[str],
             matrix_config: MatrixConfig = None,
-            spam_images: List[str] = None,
             debug_mode: bool = False,
     ):
         self.username = username
@@ -50,7 +48,6 @@ class Config:
         self.communities = communities
         self.debug_mode = debug_mode
         self.matrix_config = matrix_config
-        self.spam_images = spam_images
 
 
 def environment_config():
@@ -66,6 +63,5 @@ def environment_config():
             os.getenv("MATRIX_PASSWORD"),
             os.getenv("MATRIX_ROOM")
         ) if os.getenv("MATRIX_INSTANCE") is not None else None,
-        [x.strip() for x in os.getenv("SPAM_IMAGES").split(',')] if os.getenv("SPAM_IMAGES") is not None else [],
         os.getenv("DEBUG") == "True"
     )

@@ -1,11 +1,11 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4320c2630667a846c0917b094e76f723667ae4b55f0fff7620f7d6b1eda41ec4"
+            "sha256": "d43398da1c9f337134f783ffef1ef1f13d90a07ad0f89f05ff4cfe9234fb7403"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_version": "3.10"
+            "python_version": "3.9"
         },
         "sources": [
             {
@@ -143,14 +143,6 @@
             ],
             "markers": "python_full_version >= '3.7.0'",
             "version": "==3.3.2"
-        },
-        "exceptiongroup": {
-            "hashes": [
-                "sha256:4bfd3996ac73b41e9b9628b04e079f193850720ea5945fc96a08633c66912f14",
-                "sha256:91f5c769735f051a4290d52edd0858999b57e5876e9f85937691bd4c9fa3ed68"
-            ],
-            "markers": "python_version < '3.11'",
-            "version": "==1.2.0"
         },
         "filelock": {
             "hashes": [
@@ -505,11 +497,11 @@
         },
         "plemmy": {
             "hashes": [
-                "sha256:86cb052714255815bcf6fda2d6bf99b135f50829ca4d43e979009201c04a289f",
-                "sha256:c0b55a72fcf82e91c7161e7e32cf656d58298a4f0c045949f1f2f7a8fc13d907"
+                "sha256:481ada6ce17154935981cd1fe3bd4244f36a21b217b3c32ec8af96f9b05f7825",
+                "sha256:b7b0064228691956e2746f21ddf5b7bf1e91892be57e55399e1f8d5e4331fd8f"
             ],
             "index": "pypi",
-            "version": "==0.4.2"
+            "version": "==0.4.1"
         },
         "pluggy": {
             "hashes": [
@@ -826,14 +818,6 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==3.4.0"
-        },
-        "tomli": {
-            "hashes": [
-                "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
-                "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"
-            ],
-            "markers": "python_version < '3.11'",
-            "version": "==2.0.1"
         },
         "torch": {
             "hashes": [

@@ -1,24 +1,33 @@
-from io import BytesIO
+from dataclasses import dataclass
+from datetime import datetime
 from typing import List, Any, Optional, Union, Dict
 
-from pylemmy import Lemmy
-from pylemmy.models.comment import Comment
-from pylemmy.models.post import Post
+from dateutil import parser
+from dateutil.tz import UTC
+from plemmy import LemmyHttp
+from plemmy.objects import Person
+from plemmy.views import PostView, CommentView
 
-from lemmymodbot.api import LemmyModHttp
+from lemmymodbot.helpers import fetch_image
 from lemmymodbot.database import Database
 
 import requests
-from PIL import Image, UnidentifiedImageError
-import imagehash
+from PIL import Image
+
+
+@dataclass
+class AccountDetails:
+    age: float
 
 
 class LemmyHandle:
+    content_footer = "\n\nMod bot (with L plates)"
 
-    def __init__(self, lemmy: Lemmy, elem: Union[Post, Comment], database: Database, config, matrix_facade):
+    def __init__(self, lemmy: LemmyHttp, elem: Union[PostView, CommentView], person: Person, database: Database, config, matrix_facade):
         self.elem = elem
+        self.person = person
         self.lemmy = lemmy
-        self.lemmy_http = LemmyModHttp(lemmy)
+        self.lemmy_http = lemmy
         self.database = database
         self.config = config
         self.matrix_facade = matrix_facade
@@ -27,37 +36,47 @@ class LemmyHandle:
         if self.config.debug_mode:
             print(f"{content}")
             return
-        actor_id = self.elem.post_view.post.creator_id if isinstance(self.elem, Post) else self.elem.comment_view
-        self.lemmy_http.send_message(actor_id, f"{content}\n\nMod bot (with L plates)")
+
+        actor_id = self.elem.creator.actor_id
+        self.lemmy_http.create_private_message(f"{content}{self.content_footer}", actor_id)
 
     def post_comment(self, content: str):
         if self.config.debug_mode:
             print(f"{content}")
             return
-        self.elem.create_comment(f"{content}\n\nMod bot (with L plates)")
+
+        self.lemmy.create_comment(
+            f"{content}{self.content_footer}",
+            self.elem.post.id,
+            parent_id=self.elem.comment.id if isinstance(self.elem, CommentView) else None
+        )
 
     def remove_thing(self, reason: str):
         if self.config.debug_mode:
             print(f"Remove {reason}")
             return
-        if isinstance(self.elem, Post):
-            self.lemmy_http.remove_post(self.elem.post_view.post.id, reason)
-        elif isinstance(self.elem, Comment):
-            self.lemmy_http.remove_comment(self.elem.comment_view.comment.id, reason)
+        if isinstance(self.elem, PostView):
+            self.lemmy.remove_post(
+                self.elem.post.id,
+                True,
+                reason
+            )
+        elif isinstance(self.elem, CommentView):
+            self.lemmy.remove_comment(
+                self.elem.comment.id,
+                True,
+                reason
+            )
 
     def _get_url(self) -> Optional[str]:
-        if self.elem is not Post or self.elem.post_view.post.url is None:
+        if not(isinstance(self.elem, PostView)) or self.elem.post.url is None:
             return None
-        return self.elem.post_view.post.url
+        return self.elem.post.url
 
     def fetch_image(self, url: str = None) -> (Image, str):
         if url is None:
             url = self._get_url()
-        try:
-            img = Image.open(BytesIO(requests.get(url).content))
-            return img, str(imagehash.phash(img))
-        except UnidentifiedImageError:
-            return None, None
+        return fetch_image(url)
 
     def fetch_content(self, url: str = None) -> (bytes, Dict[str, str]):
         if url is None:
@@ -78,7 +97,12 @@ class LemmyHandle:
             return
         self.matrix_facade.send_message(
             self.config.matrix_config.room_id,
-            message + "\n\nMod bot (with L plates)"
+            f"{message}{self.content_footer}"
+        )
+
+    def get_account_details(self) -> AccountDetails:
+        return AccountDetails(
+            (datetime.utcnow().replace(tzinfo=UTC) - parser.parse(self.person.published)).total_seconds()
         )
 
 

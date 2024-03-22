@@ -42,6 +42,7 @@ class Database:
             PRIMARY KEY("url")
         );'''
         self.check_table_exists('phash', create_phash_table_sql)
+        self.update_table('''ALTER TABLE "phash" ADD COLUMN "spam" INTEGER''')
 
     @contextmanager
     def _session(self):
@@ -100,7 +101,7 @@ class Database:
         """ add a comment id to the list of previously checked comments in the database """
         with self._session() as conn:
             sql = '''INSERT INTO comments(id, toxicity, non_toxicity) VALUES(?,?,?);'''
-            conn.execute(sql, (comment_id, results['toxicity'], results['non_toxicity']))
+            conn.execute(sql, (comment_id, results['toxicity'] if 'toxicity' in results else 0, results['non_toxicity'] if 'non_toxicity' in results else 1))
 
     def add_outcome_to_comment(self, comment_id, outcome):
         """ add an outcome to a comment record in the database """
@@ -125,29 +126,32 @@ class Database:
             body_toxicity, body_non_toxicity, link, phash) VALUES(?,?,?,?,?,?,?);"""
 
             conn.execute(sql, (post_id,
-                               detox_name_results['toxicity'],
-                               detox_name_results['non_toxicity'],
+                               detox_name_results['toxicity'] if 'toxicity' in detox_name_results else 0,
+                               detox_name_results['non_toxicity'] if 'non_toxicity' in detox_name_results else 1,
                                detox_body_results['toxicity'] if 'toxicity' in detox_body_results else 0,
                                detox_body_results['non_toxicity'] if 'non_toxicity' in detox_body_results else 1,
                                link,
                                extras['phash'] if 'phash' in extras else None
                                ))
 
-    def add_phash(self, url: str, phash: str):
+    def add_phash(self, url: str, phash: str, spam: bool = False):
         with self._session() as conn:
-            sql = """INSERT INTO phash(url, phash) VALUES(?,?);"""
-            conn.execute(sql, (url, phash))
+            sql = """INSERT INTO phash(url, phash, spam) VALUES(?,?,?);"""
+            conn.execute(sql, (url, phash, spam))
 
-    def phash_exists(self, phash: str):
+    def phash_exists(self, phash: str, spam: bool = False):
         with self._session() as conn:
-            sql = """SELECT COUNT(url) FROM phash where phash=?"""
-            result = conn.execute(sql, (phash,))
+            sql = """SELECT COUNT(url) FROM phash where phash=? AND spam=?"""
+            result = conn.execute(sql, (phash,spam))
             for row in result.fetchone():
                 if row != 0:
                     return True
         return False
 
     def url_exists(self, url: str) -> Optional[str]:
+        if url == "":
+            return None
+
         with self._session() as conn:
             sql = """SELECT phash FROM phash where url=?"""
             result = conn.execute(sql, (url,))
